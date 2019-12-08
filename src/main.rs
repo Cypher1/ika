@@ -9,7 +9,8 @@ mod tokens;
 mod tree;
 
 use compi32::comp_tree;
-use evali32::evali32;
+use evali32::Visitor;
+use evali32::Interpreter;
 
 fn main() -> std::io::Result<()> {
     let all_args: Vec<String> = env::args().collect();
@@ -43,7 +44,8 @@ fn work(filename: String, interactive: bool) -> std::io::Result<()> {
     if interactive {
         println!("R: {:?}", ast);
 
-        let res = evali32(&ast);
+        let mut interp = Interpreter::default();
+        let res = interp.visit(&ast);
         println!("{}", res);
         return Ok(());
     }
