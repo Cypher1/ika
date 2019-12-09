@@ -1,9 +1,6 @@
 use super::tokens::*;
 use super::tree::Tree;
-
-pub trait Visitor<T, U> {
-    fn visit(&mut self, e: &T) -> U;
-}
+use super::ast::Visitor;
 
 // Walks the AST interpreting it.
 pub struct Interpreter;
@@ -14,7 +11,10 @@ impl Default for Interpreter {
     }
 }
 
-impl Visitor<Tree<Token>, i32> for Interpreter {
+impl Visitor<Tree<Token>, i32, i32> for Interpreter {
+    fn visit_root(&mut self, expr: &Tree<Token>) -> i32 {
+        self.visit(expr)
+    }
     fn visit(&mut self, expr: &Tree<Token>) -> i32 {
         match expr.value.tok_type {
             TokenType::Error => {

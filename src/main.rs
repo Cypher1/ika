@@ -7,9 +7,10 @@ mod evali32;
 mod parser;
 mod tokens;
 mod tree;
+mod ast;
 
-use compi32::comp_tree;
-use evali32::Visitor;
+use ast::Visitor;
+use compi32::Compiler;
 use evali32::Interpreter;
 
 fn main() -> std::io::Result<()> {
@@ -45,12 +46,13 @@ fn work(filename: String, interactive: bool) -> std::io::Result<()> {
         println!("R: {:?}", ast);
 
         let mut interp = Interpreter::default();
-        let res = interp.visit(&ast);
+        let res = interp.visit_root(&ast);
         println!("{}", res);
         return Ok(());
     }
-    let prog = comp_tree(&ast);
-    println!("{}", prog);
+    let mut comp = Compiler::default();
+    let res = comp.visit_root(&ast);
+    println!("{}", res);
     // TODO: require left_over is empty
     Ok(())
 }
