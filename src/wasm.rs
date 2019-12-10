@@ -65,8 +65,16 @@ impl Visitor<Vec<String>, Tree<String>, CompilerError> for Compiler {
         });
     }
 
+    fn visit_call(&mut self, expr: &CallNode) -> Result<Vec<String>, CompilerError> {
+        panic!("Call not implemented in wasm");
+    }
+
     fn visit_num(&mut self, expr: &i32) -> Result<Vec<String>, CompilerError> {
         Ok(vec!["i32.const ".to_string() + &expr.to_string()])
+    }
+
+    fn visit_let(&mut self, expr: &LetNode) -> Result<Vec<String>, CompilerError> {
+        panic!("Let not implemented in wasm");
     }
 
     fn visit_un_op(&mut self, expr: &UnOpNode) -> Result<Vec<String>, CompilerError> {
