@@ -139,4 +139,11 @@ mod tests {
         let (tok, _) = lex_head(chars);
         assert_eq!(tok.tok_type, TokenType::Sym);
     }
+
+    #[test]
+    fn lex_operator() {
+        let chars = VecDeque::from_iter("-a123".chars());
+        let (tok, _) = lex_head(chars);
+        assert_eq!(tok.tok_type, TokenType::Op);
+    }
 }

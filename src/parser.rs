@@ -122,3 +122,20 @@ pub fn parse(contents: String) -> Node {
 
     return root;
 }
+
+#[cfg(test)]
+mod tests {
+    use super::parse;
+    use super::super::ast::*;
+
+    #[test]
+    fn parse_num() {
+        assert_eq!(parse("12".to_string()), Node::Num(12));
+    }
+
+    #[test]
+    fn parse_un_op() {
+        assert_eq!(parse("-12".to_string()), Node::UnOp(UnOpNode {name: "-".to_string(),
+       inner: Box::new(Node::Num(12))}));
+    }
+}

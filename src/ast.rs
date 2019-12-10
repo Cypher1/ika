@@ -1,10 +1,12 @@
 #[derive(Debug)]
+#[derive(PartialEq)]
 pub struct UnOpNode {
     pub name: String,
     pub inner: Box<Node>,
 }
 
 #[derive(Debug)]
+#[derive(PartialEq)]
 pub struct BinOpNode {
     pub name: String,
     pub left: Box<Node>,
@@ -12,6 +14,7 @@ pub struct BinOpNode {
 }
 
 #[derive(Debug)]
+#[derive(PartialEq)]
 pub enum Node {
     Error(String),
     Num(i32),
