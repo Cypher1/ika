@@ -47,12 +47,12 @@ fn work(filename: String, interactive: bool) -> std::io::Result<()> {
 
         let mut interp = Interpreter::default();
         let res = interp.visit_root(&ast);
-        println!("{}", res);
+        println!("{:?}", res);
         return Ok(());
     }
     let mut comp = Compiler::default();
     let res = comp.visit_root(&ast);
-    println!("{}", res);
+    println!("{:?}", res);
     // TODO: require left_over is empty
     Ok(())
 }

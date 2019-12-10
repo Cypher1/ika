@@ -1,7 +1,6 @@
 use std::collections::VecDeque;
 use std::iter::FromIterator;
 
-use super::tree::Tree;
 use super::ast::*;
 use super::tokens::*;
 
