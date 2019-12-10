@@ -25,8 +25,8 @@ pub enum CompilerError {
 pub struct Compiler;
 
 impl Default for Compiler {
-    fn default () -> Compiler {
-        Compiler{}
+    fn default() -> Compiler {
+        Compiler {}
     }
 }
 
@@ -34,23 +34,23 @@ impl Visitor<Vec<String>, Tree<String>, CompilerError> for Compiler {
     fn visit_root(&mut self, expr: &Node) -> Result<Tree<String>, CompilerError> {
         let name = Tree {
             value: "\"run_main\"".to_string(),
-            children: vec![]
+            children: vec![],
         };
         let def = Tree {
             value: "export".to_string(),
-            children: vec![name.clone()]
+            children: vec![name.clone()],
         };
         let node_i32 = Tree {
             value: "i32".to_string(),
-            children: vec![]
+            children: vec![],
         };
         let param = Tree {
             value: "param".to_string(),
-            children: vec![node_i32.clone(), node_i32.clone()]
+            children: vec![node_i32.clone(), node_i32.clone()],
         };
         let result = Tree {
             value: "result".to_string(),
-            children: vec![node_i32.clone()]
+            children: vec![node_i32.clone()],
         };
         let mut children = vec![def, param, result];
         children.append(&mut to_tree(self.visit(&expr)?));
@@ -61,7 +61,7 @@ impl Visitor<Vec<String>, Tree<String>, CompilerError> for Compiler {
         return Ok(Tree {
             value: "module".to_string(),
             children: vec![func],
-        })
+        });
     }
 
     fn visit_num(&mut self, expr: &i32) -> Result<Vec<String>, CompilerError> {
@@ -72,7 +72,7 @@ impl Visitor<Vec<String>, Tree<String>, CompilerError> for Compiler {
         let mut res = Vec::new();
         res.append(&mut self.visit(&expr.inner)?);
         match expr.name.as_str() {
-            "+" => {},
+            "+" => {}
             "-" => res.push("i32.sub".to_string()),
             op => return Err(CompilerError::UnknownOperator(op.to_string())),
         };

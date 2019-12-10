@@ -21,15 +21,9 @@ fn bind_infix(tok: &Token) -> i32 {
 
 fn nud(mut toks: VecDeque<Token>) -> (Node, VecDeque<Token>) {
     match toks.pop_front() {
-        None => (
-            Node::Error(ERR.to_string()),
-            toks,
-        ),
+        None => (Node::Error(ERR.to_string()), toks),
         Some(head) => match head.tok_type {
-            TokenType::NumLit => (
-                Node::Num(head.value.parse().unwrap()),
-                toks,
-            ),
+            TokenType::NumLit => (Node::Num(head.value.parse().unwrap()), toks),
             TokenType::Op => {
                 let lbp = bind_infix(&head);
                 let (right, new_toks) = expr(toks, lbp);
@@ -54,15 +48,9 @@ fn nud(mut toks: VecDeque<Token>) -> (Node, VecDeque<Token>) {
 
 fn led(mut toks: VecDeque<Token>, left_branch: Node) -> (Node, VecDeque<Token>) {
     match toks.pop_front() {
-        None => (
-            Node::Error (ERR.to_string()),
-            toks,
-        ),
+        None => (Node::Error(ERR.to_string()), toks),
         Some(head) => match head.tok_type {
-            TokenType::NumLit => (
-                Node::Num(head.value.parse().unwrap()),
-                toks,
-            ),
+            TokenType::NumLit => (Node::Num(head.value.parse().unwrap()), toks),
             TokenType::Op => {
                 let lbp = bind_infix(&head);
                 let (right, new_toks) = expr(toks, lbp);

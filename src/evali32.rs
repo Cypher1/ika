@@ -10,8 +10,8 @@ pub enum InterpreterError {
 pub struct Interpreter;
 
 impl Default for Interpreter {
-    fn default () -> Interpreter {
-        Interpreter{}
+    fn default() -> Interpreter {
+        Interpreter {}
     }
 }
 
@@ -38,10 +38,10 @@ impl Visitor<i32, i32, InterpreterError> for Interpreter {
         let l = self.visit(&expr.left)?;
         let r = self.visit(&expr.right)?;
         match expr.name.as_str() {
-            "*" => Ok(l*r),
-            "+" => Ok(l+r),
-            "/" => Ok(l/r),
-            "-" => Ok(l-r),
+            "*" => Ok(l * r),
+            "+" => Ok(l + r),
+            "/" => Ok(l / r),
+            "-" => Ok(l - r),
             "^" => Ok(i32::pow(l, r as u32)), // TODO: require pos pow
             op => Err(InterpreterError::UnknownOperator(op.to_string())),
         }
