@@ -128,6 +128,10 @@ mod tests {
     use super::parse;
     use super::super::ast::*;
 
+    fn numLit(x: i32) {
+        Box::new(Node::Num(x))
+    }
+
     #[test]
     fn parse_num() {
         assert_eq!(parse("12".to_string()), Node::Num(12));
@@ -140,9 +144,22 @@ mod tests {
     }
 
     #[test]
-    fn parse_bin_op() {
-        assert_eq!(parse("14-12".to_string()), Node::BinOp(BinOpNode {name: "-".to_string(),
-       left: Box::new(Node::Num(14)),
-       right: Box::new(Node::Num(12))}));
+    fn parse_min_op() {
+        assert_eq!(parse("14-12".to_string()),
+        Node::BinOp(BinOpNode {
+            name: "-".to_string(),
+            left: numLit(14),
+            right: numLit(12)
+        }));
+    }
+
+    #[test]
+    fn parse_mul_op() {
+        assert_eq!(parse("14*12".to_string()),
+        Node::BinOp(BinOpNode {
+            name: "*".to_string(),
+            left: numLit(14),
+            right: numLit(12)
+        }));
     }
 }
