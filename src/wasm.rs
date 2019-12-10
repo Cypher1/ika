@@ -16,6 +16,7 @@ use super::tree::*;
 use super::ast::*;
 
 #[derive(Debug)]
+#[derive(PartialEq)]
 pub enum CompilerError {
     UnknownOperator(String),
     FailedParse(String),

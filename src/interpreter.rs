@@ -1,6 +1,7 @@
 use super::ast::*;
 
 #[derive(Debug)]
+#[derive(PartialEq)]
 pub enum InterpreterError {
     UnknownOperator(String),
     FailedParse(String),
@@ -49,5 +50,18 @@ impl Visitor<i32, i32, InterpreterError> for Interpreter {
 
     fn handle_error(&mut self, expr: &String) -> Result<i32, InterpreterError> {
         Err(InterpreterError::FailedParse(expr.to_string()))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Interpreter;
+    use super::super::ast::*;
+
+    #[test]
+    fn eval_num() {
+        let mut interp = Interpreter::default();
+        let tree = Node::Num(12);
+        assert_eq!(interp.visit_root(&tree), Ok(12));
     }
 }

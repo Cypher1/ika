@@ -128,7 +128,7 @@ mod tests {
     use super::parse;
     use super::super::ast::*;
 
-    fn numLit(x: i32) {
+    fn num_lit(x: i32) -> Box<Node> {
         Box::new(Node::Num(x))
     }
 
@@ -148,8 +148,8 @@ mod tests {
         assert_eq!(parse("14-12".to_string()),
         Node::BinOp(BinOpNode {
             name: "-".to_string(),
-            left: numLit(14),
-            right: numLit(12)
+            left: num_lit(14),
+            right: num_lit(12)
         }));
     }
 
@@ -158,8 +158,8 @@ mod tests {
         assert_eq!(parse("14*12".to_string()),
         Node::BinOp(BinOpNode {
             name: "*".to_string(),
-            left: numLit(14),
-            right: numLit(12)
+            left: num_lit(14),
+            right: num_lit(12)
         }));
     }
 }
