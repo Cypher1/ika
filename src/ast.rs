@@ -1,5 +1,6 @@
 #[derive(Debug)]
 #[derive(PartialEq)]
+#[derive(Clone)]
 pub struct CallNode {
     pub name: String,
     //TODO: Args
@@ -7,6 +8,7 @@ pub struct CallNode {
 
 #[derive(Debug)]
 #[derive(PartialEq)]
+#[derive(Clone)]
 pub struct LetNode {
     pub name: String,
     //TODO: Args
@@ -15,6 +17,7 @@ pub struct LetNode {
 
 #[derive(Debug)]
 #[derive(PartialEq)]
+#[derive(Clone)]
 pub struct UnOpNode {
     pub name: String,
     pub inner: Box<Node>,
@@ -22,6 +25,7 @@ pub struct UnOpNode {
 
 #[derive(Debug)]
 #[derive(PartialEq)]
+#[derive(Clone)]
 pub struct BinOpNode {
     pub name: String,
     pub left: Box<Node>,
@@ -30,6 +34,7 @@ pub struct BinOpNode {
 
 #[derive(Debug)]
 #[derive(PartialEq)]
+#[derive(Clone)]
 pub enum Node {
     Error(String),
     Call(CallNode),

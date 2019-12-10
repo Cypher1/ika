@@ -18,6 +18,23 @@ pub struct Interpreter {
     stack: Vec<Frame>,
 }
 
+impl Interpreter {
+    pub fn lookup(self, path: Vec<String>) -> Option<Tree<LetNode>> {
+        let mut curr = &self.scope;
+
+        for name in path {
+            for child in &curr.children {
+                if child.value.name == name {
+                    curr = child;
+                    break;
+                }
+            }
+            return None;
+        }
+        return Some((*curr).clone());
+    }
+}
+
 impl Default for Interpreter {
     fn default() -> Interpreter {
         Interpreter {
