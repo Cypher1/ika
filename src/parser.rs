@@ -138,4 +138,11 @@ mod tests {
         assert_eq!(parse("-12".to_string()), Node::UnOp(UnOpNode {name: "-".to_string(),
        inner: Box::new(Node::Num(12))}));
     }
+
+    #[test]
+    fn parse_bin_op() {
+        assert_eq!(parse("14-12".to_string()), Node::BinOp(BinOpNode {name: "-".to_string(),
+       left: Box::new(Node::Num(14)),
+       right: Box::new(Node::Num(12))}));
+    }
 }
