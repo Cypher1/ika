@@ -50,8 +50,8 @@ fn nud(mut toks: VecDeque<Token>) -> (Node, VecDeque<Token>) {
                     }),
                     toks,
                 );
-            }
-            _ => unimplemented!(),
+            },
+            TokenType::Unknown | TokenType::Whitespace => panic!("Lexer should not produce unknown or whitespace"),
         },
     }
 }
@@ -73,8 +73,10 @@ fn led(mut toks: VecDeque<Token>, left_branch: Node) -> (Node, VecDeque<Token>) 
                     }),
                     new_toks,
                 );
-            }
-            _ => unimplemented!(),
+            },
+            TokenType::Bracket => (Node::Error("Array style indexing not currently supported".to_string()), toks),
+            TokenType::Sym => (Node::Error("Infix symbols not currently supported".to_string()), toks),
+            TokenType::Unknown | TokenType::Whitespace => panic!("Lexer should not produce unknown or whitespace"),
         },
     }
 }

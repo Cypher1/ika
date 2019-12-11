@@ -6,7 +6,8 @@ use std::cmp;
 #[derive(Debug)]
 #[derive(PartialEq)]
 pub enum InterpreterError {
-    UnknownOperator(String),
+    UnknownInfixOperator(String),
+    UnknownPrefixOperator(String),
     FailedParse(String),
 }
 
@@ -24,7 +25,7 @@ impl Interpreter {
     pub fn bind(&mut self, path: Vec<String>, binding: LetNode) -> Result<(), String> {
         Interpreter::bind_to(&mut self.scope, path, binding)
     }
-    pub fn bind_to(curr: &mut Tree<LetNode>, path: Vec<String>, binding: LetNode) -> Result<(), String> {
+    fn bind_to(curr: &mut Tree<LetNode>, path: Vec<String>, binding: LetNode) -> Result<(), String> {
         match path.split_at(cmp::min(1, path.len())) {
             ([], _) => {
                 curr.value = binding;
@@ -75,33 +76,35 @@ impl Default for Interpreter {
 }
 
 impl Visitor<i32, i32, InterpreterError> for Interpreter {
-    fn visit_root(&mut self, expr: &Node) -> Result<i32, InterpreterError> {
+    type Res = Result<i32, InterpreterError>;
+
+    fn visit_root(&mut self, expr: &Node) -> Res {
         self.visit(expr)
     }
 
-    fn visit_call(&mut self, expr: &CallNode) -> Result<i32, InterpreterError> {
+    fn visit_call(&mut self, expr: &CallNode) -> Res {
         panic!("Call not implemented in interpreter");
     }
 
-    fn visit_num(&mut self, expr: &i32) -> Result<i32, InterpreterError> {
+    fn visit_num(&mut self, expr: &i32) -> Res {
         Ok(expr.clone())
     }
 
-    fn visit_let(&mut self, expr: &LetNode) -> Result<i32, InterpreterError> {
+    fn visit_let(&mut self, expr: &LetNode) -> Res {
         panic!("Let not implemented in interpreter");
     }
 
-    fn visit_un_op(&mut self, expr: &UnOpNode) -> Result<i32, InterpreterError> {
+    fn visit_un_op(&mut self, expr: &UnOpNode) -> Res {
         let i = self.visit(&expr.inner)?;
         match expr.name.as_str() {
             "+" => Ok(i),
             "-" => Ok(-i),
             "!" => Ok(if i == 0 { 1 } else { 0 }), // TODO: bools
-            op => Err(InterpreterError::UnknownOperator(op.to_string())),
+            op => Err(InterpreterError::UnknownPrefixOperator(op.to_string())),
         }
     }
 
-    fn visit_bin_op(&mut self, expr: &BinOpNode) -> Result<i32, InterpreterError> {
+    fn visit_bin_op(&mut self, expr: &BinOpNode) -> Res {
         let l = self.visit(&expr.left)?;
         let r = self.visit(&expr.right)?;
         match expr.name.as_str() {
@@ -110,11 +113,11 @@ impl Visitor<i32, i32, InterpreterError> for Interpreter {
             "/" => Ok(l / r),
             "-" => Ok(l - r),
             "^" => Ok(i32::pow(l, r as u32)), // TODO: require pos pow
-            op => Err(InterpreterError::UnknownOperator(op.to_string())),
+            op => Err(InterpreterError::UnknownInfixOperator(op.to_string())),
         }
     }
 
-    fn handle_error(&mut self, expr: &String) -> Result<i32, InterpreterError> {
+    fn handle_error(&mut self, expr: &String) -> Res {
         Err(InterpreterError::FailedParse(expr.to_string()))
     }
 }
