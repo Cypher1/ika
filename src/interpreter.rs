@@ -144,6 +144,12 @@ impl Visitor<PrimValue, PrimValue, InterpreterError> for Interpreter {
                 (Str(l), Str(r)) => Ok(Bool(l.to_string() == r.to_string())),
                 _ => Err(InterpreterError::TypeMismatch2("==".to_string(), l, r))
             },
+            "!=" => match (&l, &r) {
+                (Bool(l), Bool(r)) => Ok(Bool(*l != *r)),
+                (I32(l), I32(r)) => Ok(Bool(l != r)),
+                (Str(l), Str(r)) => Ok(Bool(l.to_string() != r.to_string())),
+                _ => Err(InterpreterError::TypeMismatch2("!=".to_string(), l, r))
+            },
             ">" => match (&l, &r) {
                 (Bool(l), Bool(r)) => Ok(Bool(*l > *r)),
                 (I32(l), I32(r)) => Ok(Bool(l > r)),
