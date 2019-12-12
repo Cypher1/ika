@@ -32,8 +32,8 @@ impl Default for Compiler {
     }
 }
 
+type Res = Result<Vec<String>, CompilerError>;
 impl Visitor<Vec<String>, Tree<String>, CompilerError> for Compiler {
-    type Res = Result<i32, CompilerError>;
     fn visit_root(&mut self, expr: &Node) -> Result<Tree<String>, CompilerError> {
         let name = Tree {
             value: "\"run_main\"".to_string(),
@@ -71,8 +71,12 @@ impl Visitor<Vec<String>, Tree<String>, CompilerError> for Compiler {
         panic!("Call not implemented in wasm");
     }
 
-    fn visit_num(&mut self, expr: &i32) -> Res {
-        Ok(vec!["i32.const ".to_string() + &expr.to_string()])
+    fn visit_prim(&mut self, expr: &PrimValue) -> Res {
+        use PrimValue::*;
+        match expr {
+            I32(n) => Ok(vec!["i32.const ".to_string() + &n.to_string()]),
+            _ => unimplemented!(),
+        }
     }
 
     fn visit_let(&mut self, expr: &LetNode) -> Res {

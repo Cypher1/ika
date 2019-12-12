@@ -9,6 +9,8 @@ pub enum InterpreterError {
     UnknownInfixOperator(String),
     UnknownPrefixOperator(String),
     FailedParse(String),
+    TypeMismatch(String, PrimValue),
+    TypeMismatch2(String, PrimValue, PrimValue),
 }
 
 pub struct Frame {
@@ -75,8 +77,8 @@ impl Default for Interpreter {
     }
 }
 
-impl Visitor<i32, i32, InterpreterError> for Interpreter {
-    type Res = Result<i32, InterpreterError>;
+type Res = Result<PrimValue, InterpreterError>;
+impl Visitor<PrimValue, PrimValue, InterpreterError> for Interpreter {
 
     fn visit_root(&mut self, expr: &Node) -> Res {
         self.visit(expr)
@@ -86,7 +88,7 @@ impl Visitor<i32, i32, InterpreterError> for Interpreter {
         panic!("Call not implemented in interpreter");
     }
 
-    fn visit_num(&mut self, expr: &i32) -> Res {
+    fn visit_prim(&mut self, expr: &PrimValue) -> Res {
         Ok(expr.clone())
     }
 
@@ -95,25 +97,73 @@ impl Visitor<i32, i32, InterpreterError> for Interpreter {
     }
 
     fn visit_un_op(&mut self, expr: &UnOpNode) -> Res {
+        use PrimValue::*;
         let i = self.visit(&expr.inner)?;
         match expr.name.as_str() {
-            "+" => Ok(i),
-            "-" => Ok(-i),
-            "!" => Ok(if i == 0 { 1 } else { 0 }), // TODO: bools
-            op => Err(InterpreterError::UnknownPrefixOperator(op.to_string())),
+            "!" => match i {
+                Bool(n) => Ok(Bool(!n)),
+                _ => Err(InterpreterError::TypeMismatch("!".to_string(), i))
+            },
+            "+" => match i {
+                I32(n) => Ok(I32(n)),
+                _ => Err(InterpreterError::TypeMismatch("+".to_string(), i))
+
+            }
+            "-" => match i {
+                I32(n) => Ok(I32(-n)),
+                _ => Err(InterpreterError::TypeMismatch("-".to_string(), i))
+            },
+            op => Err(InterpreterError::UnknownInfixOperator(op.to_string())),
         }
     }
 
     fn visit_bin_op(&mut self, expr: &BinOpNode) -> Res {
+        use PrimValue::*;
         let l = self.visit(&expr.left)?;
         let r = self.visit(&expr.right)?;
         match expr.name.as_str() {
-            "*" => Ok(l * r),
-            "+" => Ok(l + r),
-            "/" => Ok(l / r),
-            "-" => Ok(l - r),
-            "^" => Ok(i32::pow(l, r as u32)), // TODO: require pos pow
-            op => Err(InterpreterError::UnknownInfixOperator(op.to_string())),
+            "+" => match (&l, &r) {
+                (Bool(l), Bool(r)) => Ok(I32(if *l {1} else {0} + if *r {1} else {0})),
+                (Bool(l), I32(r)) => Ok(I32(if *l {1} else {0} + r)),
+                (Bool(l), Str(r)) => Ok(Str(l.to_string() + &r.to_string())),
+                (I32(l), Bool(r)) => Ok(I32(l + if *r {1} else {0})),
+                (I32(l), I32(r)) => Ok(I32(l + r)),
+                (I32(l), Str(r)) => Ok(Str(l.to_string() + &r.to_string())),
+                (Str(l), Bool(r)) => Ok(Str(l.to_string() + &r.to_string())),
+                (Str(l), I32(r)) => Ok(Str(l.to_string() + &r.to_string())),
+                (Str(l), Str(r)) => Ok(Str(l.to_string() + &r.to_string())),
+            },
+            "-" => match (&l, &r) {
+                (I32(l), Bool(r)) => Ok(I32(l - if *r {1} else {0})),
+                (I32(l), I32(r)) => Ok(I32(l - r)),
+                _ => Err(InterpreterError::TypeMismatch2("-".to_string(), l, r))
+            },
+            "*" => match (&l, &r) {
+                (Bool(l), I32(r)) => Ok(I32(if *l {*r} else {0})),
+                (Bool(l), Str(r)) => Ok(Str(if *l {r.to_string()} else {"".to_string()})),
+                (I32(l), Bool(r)) => Ok(I32(if *r {*l} else {0})),
+                (I32(l), I32(r)) => Ok(I32(l * r)),
+                // (I32(l), Str(r)) => Ok(Str(l.to_string() * r)),
+                (Str(l), Bool(r)) => Ok(Str(if *r {l.to_string()} else {"".to_string()})),
+                // (Str(l), I32(r)) => Ok(Str(l * r.to_string())),
+                _ => Err(InterpreterError::TypeMismatch2("*".to_string(), l, r))
+            },
+            "&&" => match (&l, &r) {
+                (Bool(l), Bool(r)) => Ok(Bool(*l&&*r)),
+                _ => Err(InterpreterError::TypeMismatch2("&&".to_string(), l, r))
+
+            },
+            "||" => match (&l, &r) {
+                (Bool(l), Bool(r)) => Ok(Bool(*l||*r)),
+                _ => Err(InterpreterError::TypeMismatch2("||".to_string(), l, r))
+
+            },
+            "^" => match (&l, &r) {
+                (I32(l), Bool(r)) => Ok(I32(if *r {*l} else {1})),
+                (I32(l), I32(r)) => Ok(I32(i32::pow(*l, *r as u32))), // TODO: require pos pow
+                _ => Err(InterpreterError::TypeMismatch2("^".to_string(), l, r))
+            },
+            op => Err(InterpreterError::UnknownPrefixOperator(op.to_string())),
         }
     }
 
@@ -126,18 +176,20 @@ impl Visitor<i32, i32, InterpreterError> for Interpreter {
 mod tests {
     use super::Interpreter;
     use super::super::ast::*;
+    use PrimValue::*;
+    use Node::*;
 
     #[test]
     fn eval_num() {
         let mut interp = Interpreter::default();
-        let tree = Node::Num(12);
-        assert_eq!(interp.visit_root(&tree), Ok(12));
+        let tree = Prim(I32(12));
+        assert_eq!(interp.visit_root(&tree), Ok(I32(12)));
     }
 
     #[test]
     fn bind_sym() {
         let mut interp = Interpreter::default();
-        let value = Node::Num(12);
+        let value = Prim(I32(12));
         let let_x = LetNode {
             name: "x".to_string(),
             value: Some(Box::new(value))
@@ -152,14 +204,14 @@ mod tests {
     #[test]
     fn bind_sym_near_other() {
         let mut interp = Interpreter::default();
-        let value = Node::Num(12);
+        let value = Node::Prim(PrimValue::I32(12));
         let let_x = LetNode {
             name: "x".to_string(),
             value: Some(Box::new(value))
         };
         let let_y = LetNode {
             name: "y".to_string(),
-            value: Some(Box::new(Node::Num(13)))
+            value: Some(Box::new(Prim(I32(13))))
         };
 
 
@@ -173,14 +225,14 @@ mod tests {
     #[test]
     fn bind_sym_near_overlap() {
         let mut interp = Interpreter::default();
-        let value = Node::Num(12);
+        let value = Node::Prim(PrimValue::I32(12));
         let let_x = LetNode {
             name: "x".to_string(),
             value: Some(Box::new(value))
         };
         let let_y = LetNode {
             name: "x".to_string(),
-            value: Some(Box::new(Node::Num(13)))
+            value: Some(Box::new(Node::Prim(PrimValue::I32(13))))
         };
 
 
