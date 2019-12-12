@@ -216,6 +216,8 @@ impl Visitor<PrimValue, PrimValue, InterpreterError> for Interpreter {
 #[cfg(test)]
 mod tests {
     use super::Interpreter;
+    use super::Res;
+    use super::super::parser;
     use super::super::ast::*;
     use PrimValue::*;
     use Node::*;
@@ -225,6 +227,27 @@ mod tests {
         let mut interp = Interpreter::default();
         let tree = Prim(I32(12));
         assert_eq!(interp.visit_root(&tree), Ok(I32(12)));
+    }
+
+    fn eval_str(s: String) -> Res {
+        let ast = parser::parse(s);
+        let mut interp = Interpreter::default();
+        interp.visit_root(&ast)
+    }
+
+    #[test]
+    fn parse_and_eval_bool() {
+        assert_eq!(eval_str("true".to_string()), Ok(Bool(true)));
+    }
+
+    #[test]
+    fn parse_and_eval_i32() {
+        assert_eq!(eval_str("32".to_string()), Ok(I32(32)));
+    }
+
+    #[test]
+    fn parse_and_eval_str() {
+        assert_eq!(eval_str("\"32\"".to_string()), Ok(Str("32".to_string())));
     }
 
     #[test]
