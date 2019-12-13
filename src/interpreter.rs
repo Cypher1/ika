@@ -241,8 +241,40 @@ mod tests {
     }
 
     #[test]
+    fn parse_and_eval_bool_and() {
+        assert_eq!(eval_str("true&&true".to_string()), Ok(Bool(true)));
+        assert_eq!(eval_str("false&&true".to_string()), Ok(Bool(false)));
+        assert_eq!(eval_str("true&&false".to_string()), Ok(Bool(false)));
+        assert_eq!(eval_str("false&&false".to_string()), Ok(Bool(false)));
+    }
+
+    #[test]
+    fn parse_and_eval_bool_or() {
+        assert_eq!(eval_str("true||true".to_string()), Ok(Bool(true)));
+        assert_eq!(eval_str("false||true".to_string()), Ok(Bool(true)));
+        assert_eq!(eval_str("true||false".to_string()), Ok(Bool(true)));
+        assert_eq!(eval_str("false||false".to_string()), Ok(Bool(false)));
+    }
+
+    #[test]
+    fn parse_and_eval_bool_eq() {
+        assert_eq!(eval_str("true==true".to_string()), Ok(Bool(true)));
+        assert_eq!(eval_str("false==true".to_string()), Ok(Bool(false)));
+        assert_eq!(eval_str("true==false".to_string()), Ok(Bool(false)));
+        assert_eq!(eval_str("false==false".to_string()), Ok(Bool(true)));
+    }
+
+    #[test]
     fn parse_and_eval_i32() {
         assert_eq!(eval_str("32".to_string()), Ok(I32(32)));
+    }
+
+    #[test]
+    fn parse_and_eval_i32_eq() {
+        assert_eq!(eval_str("0==0".to_string()), Ok(Bool(true)));
+        assert_eq!(eval_str("-1==1".to_string()), Ok(Bool(false)));
+        assert_eq!(eval_str("1==123".to_string()), Ok(Bool(false)));
+        assert_eq!(eval_str("1302==1302".to_string()), Ok(Bool(true)));
     }
 
     #[test]
