@@ -189,6 +189,14 @@ impl Visitor<PrimValue, PrimValue, InterpreterError> for Interpreter {
                 // (Str(l), I32(r)) => Ok(Str(l * r.to_string())),
                 _ => Err(InterpreterError::TypeMismatch2("*".to_string(), l, r))
             },
+            "/" => match (&l, &r) {
+                (I32(l), I32(r)) => Ok(I32(l / r)),
+                _ => Err(InterpreterError::TypeMismatch2("/".to_string(), l, r))
+            },
+            "%" => match (&l, &r) {
+                (I32(l), I32(r)) => Ok(I32(l % r)),
+                _ => Err(InterpreterError::TypeMismatch2("%".to_string(), l, r))
+            },
             "&&" => match (&l, &r) {
                 (Bool(l), Bool(r)) => Ok(Bool(*l&&*r)),
                 _ => Err(InterpreterError::TypeMismatch2("&&".to_string(), l, r))
