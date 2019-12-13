@@ -286,6 +286,14 @@ mod tests {
     }
 
     #[test]
+    fn parse_and_eval_i32_pow() {
+        assert_eq!(eval_str("2^3".to_string()), Ok(I32(8)));
+        assert_eq!(eval_str("3^2".to_string()), Ok(I32(9)));
+        assert_eq!(eval_str("-4^2".to_string()), Ok(I32(16)));
+        assert_eq!(eval_str("2^3^2".to_string()), Ok(I32(512)));
+    }
+
+    #[test]
     fn parse_and_eval_str() {
         assert_eq!(eval_str("\"32\"".to_string()), Ok(Str("32".to_string())));
     }
