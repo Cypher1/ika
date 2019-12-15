@@ -34,12 +34,12 @@ impl Interpreter {
             },
             ([name], rest) => {
                 for child in &mut curr.children {
-                    if child.value.name == *name {
+                    if child.value.call.name == *name {
                         return Interpreter::bind_to(child, rest.to_vec(), binding);
                     }
                 }
                 let mut new = Tree {
-                    value: LetNode{name: name.to_string(), value: None},
+                    value: LetNode{call: CallNode{name: name.to_string(), args: vec![]}, value: None},
                     children: vec![],
                 };
                 Interpreter::bind_to(&mut new, rest.to_vec(), binding)?;
@@ -54,7 +54,7 @@ impl Interpreter {
 
         'name: for name in path {
             for child in &curr.children {
-                if child.value.name == name {
+                if child.value.call.name == name {
                     curr = child;
                     continue 'name;
                 }
@@ -69,7 +69,7 @@ impl Default for Interpreter {
     fn default() -> Interpreter {
         Interpreter {
             scope: Tree {
-                value: LetNode{name: "".to_string(), value: None },
+                value: LetNode{call: CallNode{name: "".to_string(), args: vec![]}, value: None },
                 children: vec![],
             },
             stack: vec![],
@@ -298,12 +298,19 @@ mod tests {
         assert_eq!(eval_str("\"32\"".to_string()), Ok(Str("32".to_string())));
     }
 
+    fn sym(name: String) -> CallNode {
+        CallNode {
+            name: name,
+            args: vec![],
+        }
+    }
+
     #[test]
     fn bind_sym() {
         let mut interp = Interpreter::default();
         let value = Prim(I32(12));
         let let_x = LetNode {
-            name: "x".to_string(),
+            call: sym("x".to_string()),
             value: Some(Box::new(value))
         };
 
@@ -318,11 +325,11 @@ mod tests {
         let mut interp = Interpreter::default();
         let value = Node::Prim(PrimValue::I32(12));
         let let_x = LetNode {
-            name: "x".to_string(),
+            call: sym("x".to_string()),
             value: Some(Box::new(value))
         };
         let let_y = LetNode {
-            name: "y".to_string(),
+            call: sym("y".to_string()),
             value: Some(Box::new(Prim(I32(13))))
         };
 
@@ -339,11 +346,11 @@ mod tests {
         let mut interp = Interpreter::default();
         let value = Node::Prim(PrimValue::I32(12));
         let let_x = LetNode {
-            name: "x".to_string(),
+            call: sym("x".to_string()),
             value: Some(Box::new(value))
         };
         let let_y = LetNode {
-            name: "x".to_string(),
+            call: sym("x".to_string()),
             value: Some(Box::new(Node::Prim(PrimValue::I32(13))))
         };
 

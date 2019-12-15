@@ -3,7 +3,7 @@
 #[derive(Clone)]
 pub struct CallNode {
     pub name: String,
-    //TODO: Args
+    pub args: Vec<LetNode>,
 }
 
 #[derive(Debug)]
@@ -19,8 +19,7 @@ pub enum PrimValue {
 #[derive(PartialEq)]
 #[derive(Clone)]
 pub struct LetNode {
-    pub name: String,
-    //TODO: Args
+    pub call: CallNode,
     pub value: Option<Box<Node>>,
 }
 
