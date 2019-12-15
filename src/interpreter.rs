@@ -314,6 +314,13 @@ mod tests {
         assert_eq!(eval_str("\"32\"".to_string()), Ok(Str("32".to_string())));
     }
 
+    fn sym(name: String) -> CallNode {
+        CallNode {
+            name: name,
+            args: vec![],
+        }
+    }
+
     #[test]
     fn parse_and_eval_let() {
         let interp = interp_with_str("x=3".to_string());
