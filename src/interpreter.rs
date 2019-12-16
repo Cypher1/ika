@@ -314,6 +314,17 @@ mod tests {
         assert_eq!(eval_str("\"32\"".to_string()), Ok(Str("32".to_string())));
     }
 
+    #[test]
+    fn parse_and_eval_let() {
+        let interp = interp_with_str("x=3".to_string());
+        let x_eq_3 = LetNode {
+            call: sym("x".to_string()),
+            value: Some(Box::new(Prim(I32(3))))
+        };
+
+        assert_eq!(interp.stack, vec![vec![x_eq_3]]);
+    }
+
     fn sym(name: String) -> CallNode {
         CallNode {
             name: name,
