@@ -13,9 +13,7 @@ pub enum InterpreterError {
     TypeMismatch2(String, PrimValue, PrimValue),
 }
 
-pub struct Frame {
-
-}
+type Frame = Vec<LetNode>;
 
 // Walks the AST interpreting it.
 pub struct Interpreter {
@@ -72,7 +70,7 @@ impl Default for Interpreter {
                 value: LetNode{call: CallNode{name: "".to_string(), args: vec![]}, value: None },
                 children: vec![],
             },
-            stack: vec![],
+            stack: vec![vec![]],
         }
     }
 }
@@ -98,7 +96,14 @@ impl Visitor<PrimValue, PrimValue, InterpreterError> for Interpreter {
     }
 
     fn visit_let(&mut self, expr: &LetNode) -> Res {
-        panic!("Let not implemented in interpreter");
+        use PrimValue::*;
+        match self.stack.last_mut() {
+            None => panic!("there is no stack frame"),
+            Some(frame) => {
+                frame.push(expr.clone());
+                return Ok(Unit);
+            }
+        }
     }
 
     fn visit_un_op(&mut self, expr: &UnOpNode) -> Res {
@@ -137,6 +142,7 @@ impl Visitor<PrimValue, PrimValue, InterpreterError> for Interpreter {
                 (Str(l), Bool(r)) => Ok(Str(l.to_string() + &r.to_string())),
                 (Str(l), I32(r)) => Ok(Str(l.to_string() + &r.to_string())),
                 (Str(l), Str(r)) => Ok(Str(l.to_string() + &r.to_string())),
+                _ => Err(InterpreterError::TypeMismatch2("+".to_string(), l, r))
             },
             "==" => match (&l, &r) {
                 (Bool(l), Bool(r)) => Ok(Bool(*l == *r)),
@@ -243,6 +249,13 @@ mod tests {
         interp.visit_root(&ast)
     }
 
+    fn interp_with_str(s: String) -> Interpreter {
+        let ast = parser::parse(s);
+        let mut interp = Interpreter::default();
+        interp.visit_root(&ast);
+        interp
+    }
+
     #[test]
     fn parse_and_eval_bool() {
         assert_eq!(eval_str("true".to_string()), Ok(Bool(true)));
@@ -296,6 +309,17 @@ mod tests {
     #[test]
     fn parse_and_eval_str() {
         assert_eq!(eval_str("\"32\"".to_string()), Ok(Str("32".to_string())));
+    }
+
+    #[test]
+    fn parse_and_eval_let() {
+        let interp = interp_with_str("x=3".to_string());
+        let x_eq_3 = LetNode {
+            call: sym("x".to_string()),
+            value: Some(Box::new(Prim(I32(3))))
+        };
+
+        assert_eq!(interp.stack, vec![vec![x_eq_3]]);
     }
 
     fn sym(name: String) -> CallNode {

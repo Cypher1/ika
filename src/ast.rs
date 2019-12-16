@@ -10,6 +10,7 @@ pub struct CallNode {
 #[derive(PartialEq)]
 #[derive(Clone)]
 pub enum PrimValue {
+    Unit,
     Bool(bool),
     I32(i32),
     Str(String),
