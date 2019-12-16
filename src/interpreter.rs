@@ -132,6 +132,9 @@ impl Visitor<PrimValue, PrimValue, InterpreterError> for Interpreter {
         let l = self.visit(&expr.left)?;
         let r = self.visit(&expr.right)?;
         match expr.name.as_str() {
+            ";" => match (&l, &r) {
+                (_, r) => Ok(r.clone()),
+            },
             "+" => match (&l, &r) {
                 (Bool(l), Bool(r)) => Ok(I32(if *l {1} else {0} + if *r {1} else {0})),
                 (Bool(l), I32(r)) => Ok(I32(if *l {1} else {0} + r)),

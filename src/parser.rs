@@ -7,6 +7,7 @@ use super::tokens::*;
 fn binding_power(tok: &Token) -> (i32, bool) {
     let bind = match &tok.tok_type {
         TokenType::Op => match tok.value.as_str() {
+            ";" => 20,
             "," => 30,
             "=" => 40,
             "<" => 50,
@@ -27,7 +28,6 @@ fn binding_power(tok: &Token) -> (i32, bool) {
             "[" => 110,
             "(" => 110,
             "{" => 110,
-            ";" => 2000,
             _ => panic!("Unknown operator"),
         },
         TokenType::NumLit => 0,
@@ -162,7 +162,8 @@ pub fn parse(contents: String) -> Node {
     let (root, left_over) = expr(toks, 0);
 
     if left_over.len() != 0 {
-        println!("Oh no");
+        println!("Oh no: Left over characters {:?}", left_over);
+        //TODO: Insert a semi by default
     }
 
     return root;
