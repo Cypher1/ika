@@ -255,7 +255,7 @@ mod tests {
     fn interp_with_str(s: String) -> Interpreter {
         let ast = parser::parse(s);
         let mut interp = Interpreter::default();
-        interp.visit_root(&ast);
+        interp.visit_root(&ast).expect("failed to eval expr");
         interp
     }
 
