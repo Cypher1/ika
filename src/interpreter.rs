@@ -88,18 +88,14 @@ impl Visitor<State, PrimValue, PrimValue, InterpreterError> for Interpreter {
             "true" => return Ok(Bool(true)),
             "false" => return Ok(Bool(false)),
             n => {
-                for frame in state.iter_mut().rev() {
-                    for var in frame.iter_mut() {
+                for frame in state.iter().rev() {
+                    for var in frame.iter() {
                         if n == var.call.name {
                             match &var.value {
-                                Some(val) => {
-                                    // This is the variable
-                                    return self.visit_call(
-                                        state,
-                                        expr
-                                    );
-                                },
-                                None => panic!("Not defined"),
+                                Some(val) => return self.visit(
+                                    state,
+                                    &*val.clone()), // This is the variable
+                                None => {},
                             }
                         }
                     }

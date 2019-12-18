@@ -64,6 +64,7 @@ pub trait Visitor<State, Res, Final, Err> {
     fn handle_error(&mut self, state: &mut State, e: &String) -> Result<Res, Err>;
 
     fn visit(&mut self, state: &mut State, e: &Node) -> Result<Res, Err> {
+        // println!("{:?}", e);
         match e {
             Node::Prim(n) => self.visit_prim(n),
             Node::Call(n) => self.visit_call(state, n),
