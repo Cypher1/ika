@@ -97,8 +97,24 @@ fn work(filename: String, interactive: bool) -> std::io::Result<()> {
     }
 
     #[test]
-    fn parse_all_examples() {
+    fn eval_all_examples() {
         visit_dirs(Path::new("./examples"), &|filename| {
+            println!("\ttesting: {:?}", filename.path());
+
+            let mut contents = String::new();
+            let mut file = File::open(filename.path()).expect("File missing");
+            file.read_to_string(&mut contents).expect("Couldnt read file");
+
+            let ast = parser::parse(contents);
+            let mut interp = Interpreter::default();
+            interp.visit_root(&ast).expect("Failed to evaluate ast");
+        }).expect("Failed to parse all examples");
+    }
+
+    #[test]
+    #[should_panic]
+    fn eval_not_all_counter_examples() {
+        visit_dirs(Path::new("./counter_examples"), &|filename| {
             println!("\ttesting: {:?}", filename.path());
 
             let mut contents = String::new();
