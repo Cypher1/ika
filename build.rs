@@ -51,7 +51,7 @@ fn {fn_name}() {{
     let mut interp = Interpreter::default();
     interp.visit_root(&ast).expect(\"Failed to evaluate ast\");
 }}",
-            name = p,
+            name = p.replace("\\", "/"),
             fn_name = nm
         ).unwrap();
     }
@@ -83,7 +83,7 @@ fn {fn_name}() {{
     let mut interp = Interpreter::default();
     interp.visit_root(&ast).expect(\"Failed to evaluate ast\");
 }}",
-            name = p,
+            name = p.replace("\\", "/"),
             fn_name = nm
         ).unwrap();
     }
