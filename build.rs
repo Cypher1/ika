@@ -26,7 +26,7 @@ fn main() {
     let mut f = std::fs::File::create(&destination).unwrap();
 
     let mut params: Vec<String> = vec![];
-    visit_dirs(Path::new("./examples"), &mut |filename| {
+    visit_dirs(Path::new("examples"), &mut |filename| {
         let pth = filename.path();
         match pth.to_str() {
             Some(s) => {
@@ -57,7 +57,7 @@ fn {fn_name}() {{
     }
 
     let mut params: Vec<String> = vec![];
-    visit_dirs(Path::new("./counter_examples"), &mut |filename| {
+    visit_dirs(Path::new("counter_examples"), &mut |filename| {
         let pth = filename.path();
         match pth.to_str() {
             Some(s) => {
