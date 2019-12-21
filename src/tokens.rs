@@ -121,23 +121,19 @@ pub fn lex_head(mut contents: VecDeque<char>) -> (Token, VecDeque<char>) {
         contents.pop_front();
     }
     let value = head.into_iter().collect();
-    return (Token { value, tok_type }, contents);
+    if value != COMMENT {
+        return (Token { value, tok_type }, contents);
+    }
+    loop {
+        contents.pop_front();
+        // Add the character.
+        match contents.front() {
+            Some('\n') => {return lex_head(contents)},
+            Some(chr) => {contents.pop_front();},
+            None => {return lex_head(contents)},
+        }
+    }
 }
-
-/*
-                        loop {
-                            match contents.front() {
-                                Some(nxt) => {
-                                    if *nxt == *chr { break }
-                                    if *nxt == '\n' { break } //Unfinished str at eol
-                                    head.push_back(nxt.clone());
-                                },
-                                None => break, // Unfinished str at eof
-                            }
-                            contents.pop_front();
-                        }
-                        TokenType::StringLit
- */
 
 #[cfg(test)]
 mod tests {
