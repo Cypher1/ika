@@ -32,7 +32,6 @@ const WHITESPACE: &str = "\n\r\t ";
 const QUOTES: &str = "'\"`";
 const COMMENT: &str = "//";
 const MULTI_COMMENT: &str = "/*";
-const END_MULTI_COMMENT: &str = "*/";
 
 fn classify_char(ch: char) -> TokenType {
     if WHITESPACE.contains(ch) {
