@@ -121,16 +121,36 @@ pub fn lex_head(mut contents: VecDeque<char>) -> (Token, VecDeque<char>) {
         contents.pop_front();
     }
     let value = head.into_iter().collect();
-    if value != COMMENT {
+    let comment = value == COMMENT;
+    let multi_comment = value == MULTI_COMMENT;
+    if !comment && !multi_comment {
         return (Token { value, tok_type }, contents);
     }
+    // Track depth of mutli line comments
+    let mut depth = 1;
+    let mut last: Option<char> = None;
     loop {
         contents.pop_front();
         // Add the character.
-        match contents.front() {
-            Some('\n') => {return lex_head(contents)},
-            Some(chr) => {contents.pop_front();},
-            None => {return lex_head(contents)},
+        match (last, &mut contents.front()) {
+            (Some('/'), Some('*')) => {
+                depth += 1;
+            },
+            (Some('*'), Some('/')) => {
+                depth -= 1;
+                if multi_comment && depth == 0 {
+                    contents.pop_front();
+                    return lex_head(contents);
+                }
+            },
+            (_, Some(chr)) => {
+                if comment && **chr == '\n' {
+                    contents.pop_front();
+                    return lex_head(contents);
+                }
+                last = Some(**chr);
+            },
+            (_, None) => {return lex_head(contents)},
         }
     }
 }
