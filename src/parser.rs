@@ -7,6 +7,9 @@ use super::tokens::*;
 fn binding_power(tok: &Token) -> (i32, bool) {
     let bind = match &tok.tok_type {
         TokenType::Op => match tok.value.as_str() {
+            "]" => 0,
+            ")" => 0,
+            "}" => 0,
             ";" => 20,
             "," => 30,
             "=" => 40,
@@ -30,8 +33,8 @@ fn binding_power(tok: &Token) -> (i32, bool) {
             "{" => 110,
             _ => panic!("Unknown operator"),
         },
-        TokenType::NumLit => 0,
-        _ => 0, // TODO impossible
+        TokenType::NumLit => 10,
+        _ => 10, // TODO impossible
     };
     let assoc_right = match &tok.tok_type {
         TokenType::Op => match tok.value.as_str() {
@@ -61,19 +64,35 @@ fn nud(mut toks: VecDeque<Token>) -> (Node, VecDeque<Token>) {
                     new_toks,
                 );
             }
-            TokenType::Bracket => {
+            TokenType::CloseBracket => {
+                panic!("Unexpected close bracket {}", head.value);
+            }
+            TokenType::OpenBracket => {
                 let (inner, mut new_toks) = expr(toks, 0);
                 // TODO require close bracket.
+                let close = new_toks.front();
+                match (head.value.as_str(), close) {
+                    (open, Some(Token{value: close, tok_type: TokenType::CloseBracket})) => {
+                        match (open, close.as_str()) {
+                            ("(", ")") => {},
+                            ("[", "]") => {},
+                            ("{", "}") => {},
+                            (open, chr) => {
+                                panic!(format!("Unexpected closing bracket for {}, found {}.", open, chr));
+                            },
+                        };
+                    },
+                    (open, chr) => {
+                        panic!("Unclosed bracket {} found {:?}", open, chr);
+                    }
+                }
                 new_toks.pop_front();
                 return (inner, new_toks);
             }
             TokenType::Sym => {
                 // Handle args.
                 return (
-                    Node::Call(CallNode {
-                            name: head.value,
-                            args: vec![],
-                    }),
+                    Node::Sym(head.value),
                     toks,
                 );
             },
@@ -83,7 +102,13 @@ fn nud(mut toks: VecDeque<Token>) -> (Node, VecDeque<Token>) {
 }
 
 fn led(mut toks: VecDeque<Token>, left: Node) -> (Node, VecDeque<Token>) {
+    println!("here {:?} {:?}", toks, left);
     use Node::*;
+    match toks.front() {
+        Some(Token{tok_type: TokenType::CloseBracket, value: _}) => {return (Error("Close bracket".to_string()), toks);}
+        _ => {}
+    }
+
     match toks.pop_front() {
         None => (Error("Unexpected eof, expected expr tail".to_string()), toks),
         Some(head) => match head.tok_type {
@@ -93,12 +118,14 @@ fn led(mut toks: VecDeque<Token>, left: Node) -> (Node, VecDeque<Token>) {
                 let (lbp, assoc_right) = binding_power(&head);
                 let (right, new_toks) = expr(toks, lbp - if assoc_right {1} else {0});
                 if head.value == "=".to_string() {
-                     match left {
-                        Call(n) => return (Let(LetNode {
-                            call: n,
-                            value: Some(Box::new(right)),
-                        }), new_toks),
-                        _ => panic!(format!("Expected a definition, found {:?}", left)),
+                    match left {
+                        Sym(s) => {
+                            return (Let(LetNode {
+                                name: s,
+                                value: Some(Box::new(right)),
+                            }), new_toks);
+                        },
+                        _ => panic!(format!("Cannot assign to {:?}", left))
                     }
                 }
                 return (
@@ -110,8 +137,36 @@ fn led(mut toks: VecDeque<Token>, left: Node) -> (Node, VecDeque<Token>) {
                     new_toks,
                 );
             },
-            TokenType::Bracket => (Error("Array style indexing not currently supported".to_string()), toks),
-            TokenType::Sym => (Error("Infix symbols not currently supported".to_string()), toks),
+            TokenType::CloseBracket => {
+                panic!("Unexpected close bracket");
+            }
+            TokenType::OpenBracket => {
+                let (inner, mut new_toks) = expr(toks, 0);
+                // TODO require close bracket.
+                let close = new_toks.front();
+                match (head.value.as_str(), close) {
+                    (open, Some(Token{value: close, tok_type: TokenType::CloseBracket})) => {
+                        match (open, close.as_str()) {
+                            ("(", ")") => {},
+                            ("[", "]") => {},
+                            ("{", "}") => {},
+                            (open, chr) => {
+                                panic!(format!("Unexpected closing bracket for {}, found {}.", open, chr));
+                            },
+                        };
+                    },
+                    (open, chr) => {
+                        panic!("Unclosed bracket {}, found {:?}", open, chr);
+                    }
+                }
+                new_toks.pop_front();
+                // Introduce arguments
+                let args = vec![]; // getDefs(inner);
+                return (Apply(ApplyNode{inner: Box::new(left), args}), new_toks);
+            },
+            TokenType::Sym => {
+                panic!("Infix symbols not currently supported".to_string());
+            }
             TokenType::Unknown | TokenType::Whitespace => panic!("Lexer should not produce unknown or whitespace"),
         },
     }
@@ -132,7 +187,12 @@ fn expr(init_toks: VecDeque<Token>, init_lbp: i32) -> (Node, VecDeque<Token>) {
                 }
             }
         }
-        let update = led(toks, left);
+        let update = led(toks, left.clone());
+        use Node::*;
+        match update {
+            (Error(_), new_toks) => { return (left, new_toks); }
+            _ => {}
+        }
         left = update.0;
         toks = update.1;
     }
