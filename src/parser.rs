@@ -47,6 +47,25 @@ fn binding_power(tok: &Token) -> (i32, bool) {
     return (bind, assoc_right);
 }
 
+fn getDefs(root: Node) -> Vec<LetNode> {
+    let mut args = vec![];
+
+    match root {
+        Node::Let(n) => args.push(n),
+        Node::BinOp(BinOpNode{name, left, right}) => {
+            if name == "," {
+                args.append(&mut getDefs(*left));
+                args.append(&mut getDefs(*right));
+            } else {
+                args.push(LetNode{name: "it".to_string(), value: Some(Box::new(Node::BinOp(BinOpNode{name, left, right})))});
+            }
+        },
+        n => args.push(LetNode{name: "it".to_string(), value: Some(Box::new(n))}),
+    }
+
+    return args;
+}
+
 fn nud(mut toks: VecDeque<Token>) -> (Node, VecDeque<Token>) {
     match toks.pop_front() {
         None => (Node::Error("Unexpected eof, expected expr".to_string()), toks),
@@ -102,7 +121,7 @@ fn nud(mut toks: VecDeque<Token>) -> (Node, VecDeque<Token>) {
 }
 
 fn led(mut toks: VecDeque<Token>, left: Node) -> (Node, VecDeque<Token>) {
-    println!("here {:?} {:?}", toks, left);
+    // println!("here {:?} {:?}", toks, left);
     use Node::*;
     match toks.front() {
         Some(Token{tok_type: TokenType::CloseBracket, value: _}) => {return (Error("Close bracket".to_string()), toks);}
@@ -161,7 +180,7 @@ fn led(mut toks: VecDeque<Token>, left: Node) -> (Node, VecDeque<Token>) {
                 }
                 new_toks.pop_front();
                 // Introduce arguments
-                let args = vec![]; // getDefs(inner);
+                let args = getDefs(inner);
                 return (Apply(ApplyNode{inner: Box::new(left), args}), new_toks);
             },
             TokenType::Sym => {
