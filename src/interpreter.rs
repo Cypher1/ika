@@ -211,7 +211,7 @@ impl Visitor<State, PrimValue, PrimValue, InterpreterError> for Interpreter {
         }
     }
 
-    fn handle_error(&mut self, state: &mut State, expr: &String) -> Res {
+    fn handle_error(&mut self, _state: &mut State, expr: &String) -> Res {
         Err(InterpreterError::FailedParse(expr.to_string()))
     }
 }
