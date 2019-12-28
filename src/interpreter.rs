@@ -71,7 +71,7 @@ impl Visitor<State, PrimValue, PrimValue, InterpreterError> for Interpreter {
         for arg in expr.args.iter() {
             let n = Node::Let(arg.clone());
             println!("def: {:?}", n);
-            self.visit(state, &n);
+            self.visit(state, &n)?;
         }
         // Visit the expr.inner
         let res = self.visit(state, &*expr.inner);
