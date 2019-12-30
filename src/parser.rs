@@ -59,10 +59,10 @@ fn get_defs(root: Node) -> Vec<Let> {
                 args.append(&mut get_defs(*left));
                 args.append(&mut get_defs(*right));
             } else {
-                args.push(Let{name: "it".to_string(), value: Some(Box::new(BinOp{name, left, right, info}.to_node())), info});
+                args.push(Let{name: "it".to_string(), value: Some(Box::new(BinOp{name, left, right, info: info.clone()}.to_node())), info});
             }
         },
-        n => args.push(Let{name: "it".to_string(), value: Some(Box::new(n)), info: n.get_info()}),
+        n => args.push(Let{name: "it".to_string(), value: Some(Box::new(n.clone())), info: n.get_info()}),
     }
 
     return args;

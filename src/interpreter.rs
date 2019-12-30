@@ -34,9 +34,10 @@ impl Visitor<State, Prim, Prim, InterpreterError> for Interpreter {
 
     fn visit_sym(&mut self, state: &mut State, expr: &Sym) -> Res {
         use Prim::*;
+        let info = expr.clone().get_info();
         match expr.name.as_str() {
-            "true" => return Ok(Bool(true, expr.get_info())),
-            "false" => return Ok(Bool(false, expr.get_info())),
+            "true" => return Ok(Bool(true, info)),
+            "false" => return Ok(Bool(false, info)),
             n => {
                 for frame in state.iter().rev() {
                     match frame.get(n) {
@@ -86,24 +87,25 @@ impl Visitor<State, Prim, Prim, InterpreterError> for Interpreter {
                 frame.insert(expr.name.clone(), *val.clone());
             }
         }
-        return Ok(Unit(expr.get_info()));
+        return Ok(Unit(expr.clone().get_info()));
     }
 
     fn visit_un_op(&mut self, state: &mut State, expr: &UnOp) -> Res {
         use Prim::*;
         let i = self.visit(state, &expr.inner)?;
+        let info = expr.clone().get_info();
         match expr.name.as_str() {
             "!" => match i {
-                Bool(n, _) => Ok(Bool(!n, expr.get_info())),
+                Bool(n, _) => Ok(Bool(!n, info)),
                 _ => Err(InterpreterError::TypeMismatch("!".to_string(), i))
             },
             "+" => match i {
-                I32(n, _) => Ok(I32(n, expr.get_info())),
+                I32(n, _) => Ok(I32(n, info)),
                 _ => Err(InterpreterError::TypeMismatch("+".to_string(), i))
 
             }
             "-" => match i {
-                I32(n, _) => Ok(I32(-n, expr.get_info())),
+                I32(n, _) => Ok(I32(-n, info)),
                 _ => Err(InterpreterError::TypeMismatch("-".to_string(), i))
             },
             op => Err(InterpreterError::UnknownPrefixOperator(op.to_string())),
@@ -112,6 +114,7 @@ impl Visitor<State, Prim, Prim, InterpreterError> for Interpreter {
 
     fn visit_bin_op(&mut self, state: &mut State, expr: &BinOp) -> Res {
         use Prim::*;
+        let info = expr.clone().get_info();
         let l = self.visit(state, &expr.left)?;
         let r = self.visit(state, &expr.right)?;
         match expr.name.as_str() {
@@ -119,89 +122,89 @@ impl Visitor<State, Prim, Prim, InterpreterError> for Interpreter {
                 (_, r) => Ok(r.clone()),
             },
             "+" => match (&l, &r) {
-                (Bool(l, _), Bool(r, _)) => Ok(I32(if *l {1} else {0} + if *r {1} else {0}, expr.get_info())),
-                (Bool(l, _), I32(r, _)) => Ok(I32(if *l {1} else {0} + r, expr.get_info())),
-                (Bool(l, _), Str(r, _)) => Ok(Str(l.to_string() + &r.to_string(), expr.get_info())),
-                (I32(l, _), Bool(r, _)) => Ok(I32(l + if *r {1} else {0}, expr.get_info())),
-                (I32(l, _), I32(r, _)) => Ok(I32(l + r, expr.get_info())),
-                (I32(l, _), Str(r, _)) => Ok(Str(l.to_string() + &r.to_string(), expr.get_info())),
-                (Str(l, _), Bool(r, _)) => Ok(Str(l.to_string() + &r.to_string(), expr.get_info())),
-                (Str(l, _), I32(r, _)) => Ok(Str(l.to_string() + &r.to_string(), expr.get_info())),
-                (Str(l, _), Str(r, _)) => Ok(Str(l.to_string() + &r.to_string(), expr.get_info())),
+                (Bool(l, _), Bool(r, _)) => Ok(I32(if *l {1} else {0} + if *r {1} else {0}, info)),
+                (Bool(l, _), I32(r, _)) => Ok(I32(if *l {1} else {0} + r, info)),
+                (Bool(l, _), Str(r, _)) => Ok(Str(l.to_string() + &r.to_string(), info)),
+                (I32(l, _), Bool(r, _)) => Ok(I32(l + if *r {1} else {0}, info)),
+                (I32(l, _), I32(r, _)) => Ok(I32(l + r, info)),
+                (I32(l, _), Str(r, _)) => Ok(Str(l.to_string() + &r.to_string(), info)),
+                (Str(l, _), Bool(r, _)) => Ok(Str(l.to_string() + &r.to_string(), info)),
+                (Str(l, _), I32(r, _)) => Ok(Str(l.to_string() + &r.to_string(), info)),
+                (Str(l, _), Str(r, _)) => Ok(Str(l.to_string() + &r.to_string(), info)),
                 _ => Err(InterpreterError::TypeMismatch2("+".to_string(), l, r))
             },
             "==" => match (&l, &r) {
-                (Bool(l, _), Bool(r, _)) => Ok(Bool(*l == *r, expr.get_info())),
-                (I32(l, _), I32(r, _)) => Ok(Bool(l == r, expr.get_info())),
-                (Str(l, _), Str(r, _)) => Ok(Bool(l.to_string() == r.to_string(), expr.get_info())),
+                (Bool(l, _), Bool(r, _)) => Ok(Bool(*l == *r, info)),
+                (I32(l, _), I32(r, _)) => Ok(Bool(l == r, info)),
+                (Str(l, _), Str(r, _)) => Ok(Bool(l.to_string() == r.to_string(), info)),
                 _ => Err(InterpreterError::TypeMismatch2("==".to_string(), l, r))
             },
             "!=" => match (&l, &r) {
-                (Bool(l, _), Bool(r, _)) => Ok(Bool(*l != *r, expr.get_info())),
-                (I32(l, _), I32(r, _)) => Ok(Bool(l != r, expr.get_info())),
-                (Str(l, _), Str(r, _)) => Ok(Bool(l.to_string() != r.to_string(), expr.get_info())),
+                (Bool(l, _), Bool(r, _)) => Ok(Bool(*l != *r, info)),
+                (I32(l, _), I32(r, _)) => Ok(Bool(l != r, info)),
+                (Str(l, _), Str(r, _)) => Ok(Bool(l.to_string() != r.to_string(), info)),
                 _ => Err(InterpreterError::TypeMismatch2("!=".to_string(), l, r))
             },
             ">" => match (&l, &r) {
-                (Bool(l, _), Bool(r, _)) => Ok(Bool(*l > *r, expr.get_info())),
-                (I32(l, _), I32(r, _)) => Ok(Bool(l > r, expr.get_info())),
-                (Str(l, _), Str(r, _)) => Ok(Bool(l.to_string() > r.to_string(), expr.get_info())),
+                (Bool(l, _), Bool(r, _)) => Ok(Bool(*l > *r, info)),
+                (I32(l, _), I32(r, _)) => Ok(Bool(l > r, info)),
+                (Str(l, _), Str(r, _)) => Ok(Bool(l.to_string() > r.to_string(), info)),
                 _ => Err(InterpreterError::TypeMismatch2(">".to_string(), l, r))
             },
             "<" => match (&l, &r) {
-                (Bool(l, _), Bool(r, _)) => Ok(Bool(*l < *r, expr.get_info())),
-                (I32(l, _), I32(r, _)) => Ok(Bool(l < r, expr.get_info())),
-                (Str(l, _), Str(r, _)) => Ok(Bool(l.to_string() < r.to_string(), expr.get_info())),
+                (Bool(l, _), Bool(r, _)) => Ok(Bool(*l < *r, info)),
+                (I32(l, _), I32(r, _)) => Ok(Bool(l < r, info)),
+                (Str(l, _), Str(r, _)) => Ok(Bool(l.to_string() < r.to_string(), info)),
                 _ => Err(InterpreterError::TypeMismatch2("<".to_string(), l, r))
             },
             ">=" => match (&l, &r) {
-                (Bool(l, _), Bool(r, _)) => Ok(Bool(*l >= *r, expr.get_info())),
-                (I32(l, _), I32(r, _)) => Ok(Bool(l >= r, expr.get_info())),
-                (Str(l, _), Str(r, _)) => Ok(Bool(l.to_string() >= r.to_string(), expr.get_info())),
+                (Bool(l, _), Bool(r, _)) => Ok(Bool(*l >= *r, info)),
+                (I32(l, _), I32(r, _)) => Ok(Bool(l >= r, info)),
+                (Str(l, _), Str(r, _)) => Ok(Bool(l.to_string() >= r.to_string(), info)),
                 _ => Err(InterpreterError::TypeMismatch2(">=".to_string(), l, r))
             },
             "<=" => match (&l, &r) {
-                (Bool(l, _), Bool(r, _)) => Ok(Bool(*l <= *r, expr.get_info())),
-                (I32(l, _), I32(r, _)) => Ok(Bool(l <= r, expr.get_info())),
-                (Str(l, _), Str(r, _)) => Ok(Bool(l.to_string() <= r.to_string(), expr.get_info())),
+                (Bool(l, _), Bool(r, _)) => Ok(Bool(*l <= *r, info)),
+                (I32(l, _), I32(r, _)) => Ok(Bool(l <= r, info)),
+                (Str(l, _), Str(r, _)) => Ok(Bool(l.to_string() <= r.to_string(), info)),
                 _ => Err(InterpreterError::TypeMismatch2("<=".to_string(), l, r))
             },
             "-" => match (&l, &r) {
-                (I32(l, _), Bool(r, _)) => Ok(I32(l - if *r {1} else {0}, expr.get_info())),
-                (I32(l, _), I32(r, _)) => Ok(I32(l - r, expr.get_info())),
+                (I32(l, _), Bool(r, _)) => Ok(I32(l - if *r {1} else {0}, info)),
+                (I32(l, _), I32(r, _)) => Ok(I32(l - r, info)),
                 _ => Err(InterpreterError::TypeMismatch2("-".to_string(), l, r))
             },
             "*" => match (&l, &r) {
-                (Bool(l, _), I32(r, _)) => Ok(I32(if *l {*r} else {0}, expr.get_info())),
-                (Bool(l, _), Str(r, _)) => Ok(Str(if *l {r.to_string()} else {"".to_string()}, expr.get_info())),
-                (I32(l, _), Bool(r, _)) => Ok(I32(if *r {*l} else {0}, expr.get_info())),
-                (I32(l, _), I32(r, _)) => Ok(I32(l * r, expr.get_info())),
-                // (I32(l, _), Str(r, _)) => Ok(Str(l.to_string() * r, expr.get_info())),
-                (Str(l, _), Bool(r, _)) => Ok(Str(if *r {l.to_string()} else {"".to_string()}, expr.get_info())),
-                // (Str(l, _), I32(r, _)) => Ok(Str(l * r.to_string(), expr.get_info())),
+                (Bool(l, _), I32(r, _)) => Ok(I32(if *l {*r} else {0}, info)),
+                (Bool(l, _), Str(r, _)) => Ok(Str(if *l {r.to_string()} else {"".to_string()}, info)),
+                (I32(l, _), Bool(r, _)) => Ok(I32(if *r {*l} else {0}, info)),
+                (I32(l, _), I32(r, _)) => Ok(I32(l * r, info)),
+                // (I32(l, _), Str(r, _)) => Ok(Str(l.to_string() * r, info)),
+                (Str(l, _), Bool(r, _)) => Ok(Str(if *r {l.to_string()} else {"".to_string()}, info)),
+                // (Str(l, _), I32(r, _)) => Ok(Str(l * r.to_string(), info)),
                 _ => Err(InterpreterError::TypeMismatch2("*".to_string(), l, r))
             },
             "/" => match (&l, &r) {
-                (I32(l, _), I32(r, _)) => Ok(I32(l / r, expr.get_info())),
+                (I32(l, _), I32(r, _)) => Ok(I32(l / r, info)),
                 _ => Err(InterpreterError::TypeMismatch2("/".to_string(), l, r))
             },
             "%" => match (&l, &r) {
-                (I32(l, _), I32(r, _)) => Ok(I32(l % r, expr.get_info())),
+                (I32(l, _), I32(r, _)) => Ok(I32(l % r, info)),
                 _ => Err(InterpreterError::TypeMismatch2("%".to_string(), l, r))
             },
             "&&" => match (&l, &r) {
-                (Bool(l, _), Bool(r, _)) => Ok(Bool(*l&&*r, expr.get_info())),
+                (Bool(l, _), Bool(r, _)) => Ok(Bool(*l&&*r, info)),
                 _ => Err(InterpreterError::TypeMismatch2("&&".to_string(), l, r))
 
             },
             "||" => match (&l, &r) {
-                (Bool(l, _), Bool(r, _)) => Ok(Bool(*l||*r, expr.get_info())),
+                (Bool(l, _), Bool(r, _)) => Ok(Bool(*l||*r, info)),
                 _ => Err(InterpreterError::TypeMismatch2("||".to_string(), l, r))
 
             },
             "^" => match (&l, &r) {
-                (I32(l, _), Bool(r, _)) => Ok(I32(if *r {*l} else {1}, expr.get_info())),
-                (I32(l, _), I32(r, _)) => Ok(I32(i32::pow(*l, *r as u32), expr.get_info())), // TODO: require pos pow
+                (I32(l, _), Bool(r, _)) => Ok(I32(if *r {*l} else {1}, info)),
+                (I32(l, _), I32(r, _)) => Ok(I32(i32::pow(*l, *r as u32), info)), // TODO: require pos pow
                 _ => Err(InterpreterError::TypeMismatch2("^".to_string(), l, r))
             },
             op => Err(InterpreterError::UnknownInfixOperator(op.to_string())),

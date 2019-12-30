@@ -98,7 +98,7 @@ impl Visitor<State, Vec<String>, Tree<String>, CompilerError> for Compiler {
                 res.append(&mut inner);
             },
             "-" => {
-                res.append(&mut self.visit_prim(&I32(0, expr.get_info()))?);
+                res.append(&mut self.visit_prim(&I32(0, expr.clone().get_info()))?);
                 res.append(&mut inner);
                 res.push("i32.sub".to_string());
             },
