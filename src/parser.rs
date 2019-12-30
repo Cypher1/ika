@@ -59,10 +59,10 @@ fn get_defs(root: Node) -> Vec<Let> {
                 args.append(&mut get_defs(*left));
                 args.append(&mut get_defs(*right));
             } else {
-                args.push(Let{name: "it".to_string(), value: Some(Box::new(to_node(BinOp{name, left, right, info}))), info});
+                args.push(Let{name: "it".to_string(), value: Some(Box::new(BinOp{name, left, right, info}.to_node())), info});
             }
         },
-        n => args.push(Let{name: "it".to_string(), value: Some(Box::new(n)), info: get_info(n)}),
+        n => args.push(Let{name: "it".to_string(), value: Some(Box::new(n)), info: n.get_info()}),
     }
 
     return args;
@@ -72,17 +72,17 @@ fn nud(mut toks: VecDeque<Token>) -> (Node, VecDeque<Token>) {
     match toks.pop_front() {
         None => (Node::Error("Unexpected eof, expected expr".to_string()), toks),
         Some(head) => match head.tok_type {
-            TokenType::NumLit => (to_node(Prim::I32(head.value.parse().unwrap(), default)), toks),
-            TokenType::StringLit => (to_node(Prim::Str(head.value, default)), toks),
+            TokenType::NumLit => (Prim::I32(head.value.parse().unwrap(), Info::default()).to_node(), toks),
+            TokenType::StringLit => (Prim::Str(head.value, Info::default()).to_node(), toks),
             TokenType::Op => {
                 let (lbp, _) = binding_power(&head);
                 let (right, new_toks) = expr(toks, lbp);
                 return (
-                    to_node(UnOp {
+                    UnOp {
                         name: head.value,
                         inner: Box::new(right),
-                        info: default,
-                    }),
+                        info: Info::default(),
+                    }.to_node(),
                     new_toks,
                 );
             }
@@ -114,7 +114,7 @@ fn nud(mut toks: VecDeque<Token>) -> (Node, VecDeque<Token>) {
             TokenType::Sym => {
                 // Handle args.
                 return (
-                    SymNode(Sym{name: head.value, info: default}),
+                    Sym{name: head.value, info: Info::default()}.to_node(),
                     toks,
                 );
             },
@@ -126,37 +126,37 @@ fn nud(mut toks: VecDeque<Token>) -> (Node, VecDeque<Token>) {
 fn led(mut toks: VecDeque<Token>, left: Node) -> (Node, VecDeque<Token>) {
     // println!("here {:?} {:?}", toks, left);
     match toks.front() {
-        Some(Token{tok_type: TokenType::CloseBracket, value: _}) => {return (Error("Close bracket".to_string()), toks);}
+        Some(Token{tok_type: TokenType::CloseBracket, value: _}) => {return (Node::Error("Close bracket".to_string()), toks);}
         _ => {}
     }
 
     match toks.pop_front() {
-        None => (Error("Unexpected eof, expected expr tail".to_string()), toks),
+        None => (Node::Error("Unexpected eof, expected expr tail".to_string()), toks),
         Some(head) => match head.tok_type {
-            TokenType::NumLit => (to_node(Prim::I32(head.value.parse().unwrap(), default)), toks),
-            TokenType::StringLit => (to_node(Prim::Str(head.value, default)), toks),
+            TokenType::NumLit => (Prim::I32(head.value.parse().unwrap(), Info::default()).to_node(), toks),
+            TokenType::StringLit => (Prim::Str(head.value, Info::default()).to_node(), toks),
             TokenType::Op => {
                 let (lbp, assoc_right) = binding_power(&head);
                 let (right, new_toks) = expr(toks, lbp - if assoc_right {1} else {0});
                 if head.value == "=".to_string() {
                     match left {
-                        SymNode(s) => {
-                            return (to_node(Let {
+                        Node::SymNode(s) => {
+                            return (Let {
                                 name: s.name,
                                 value: Some(Box::new(right)),
-                                info: default,
-                            }), new_toks);
+                                info: Info::default(),
+                            }.to_node(), new_toks);
                         },
                         _ => panic!(format!("Cannot assign to {:?}", left))
                     }
                 }
                 return (
-                    to_node(BinOp {
+                    BinOp {
                         name: head.value,
                         left: Box::new(left),
                         right: Box::new(right),
-                        info: default,
-                    }),
+                        info: Info::default(),
+                    }.to_node(),
                     new_toks,
                 );
             },
@@ -185,7 +185,7 @@ fn led(mut toks: VecDeque<Token>, left: Node) -> (Node, VecDeque<Token>) {
                 new_toks.pop_front();
                 // Introduce arguments
                 let args = get_defs(inner);
-                return (to_node(Apply{inner: Box::new(left), args}), new_toks);
+                return (Apply{inner: Box::new(left), args, info: Info::default()}.to_node(), new_toks);
             },
             TokenType::Sym => {
                 panic!("Infix symbols not currently supported".to_string());
@@ -212,7 +212,7 @@ fn expr(init_toks: VecDeque<Token>, init_lbp: i32) -> (Node, VecDeque<Token>) {
         }
         let update = led(toks, left.clone());
         match update {
-            (Error(_), new_toks) => { return (left, new_toks); }
+            (Node::Error(_), new_toks) => { return (left, new_toks); }
             _ => {}
         }
         left = update.0;
@@ -258,115 +258,115 @@ mod tests {
     use Prim::*;
 
     fn num_lit(x: i32) -> Box<Node> {
-        Box::new(to_node(I32(x, default)))
+        Box::new(I32(x, Info::default()).to_node())
     }
 
     fn str_lit(x: String) -> Box<Node> {
-        Box::new(to_node(Str(x, default)))
+        Box::new(Str(x, Info::default()).to_node())
     }
 
     #[test]
     fn parse_num() {
-        assert_eq!(parse("12".to_string()), to_node(I32(12, default)));
+        assert_eq!(parse("12".to_string()), I32(12, Info::default()).to_node());
     }
 
     #[test]
     fn parse_str() {
         assert_eq!(parse("\"hello world\"".to_string()),
-            to_node(Str("hello world".to_string(), default)));
+            Str("hello world".to_string(), Info::default()).to_node());
     }
 
     #[test]
     fn parse_un_op() {
-        assert_eq!(parse("-12".to_string()), to_node(UnOp {name: "-".to_string(),
-       inner: Box::new(to_node(I32(12, default))), info: default}));
+        assert_eq!(parse("-12".to_string()), UnOp {name: "-".to_string(),
+       inner: Box::new(I32(12, Info::default()).to_node()), info: Info::default()}.to_node());
     }
 
     #[test]
     fn parse_min_op() {
         assert_eq!(parse("14-12".to_string()),
-        to_node(BinOp {
+        BinOp {
             name: "-".to_string(),
             left: num_lit(14),
             right: num_lit(12),
-            info: default
-        }));
+            info: Info::default()
+        }.to_node());
     }
 
     #[test]
     fn parse_mul_op() {
         assert_eq!(parse("14*12".to_string()),
-        to_node(BinOp {
+        BinOp {
             name: "*".to_string(),
             left: num_lit(14),
             right: num_lit(12),
-            info: default
-        }));
+            info: Info::default()
+        }.to_node());
     }
 
     #[test]
     fn parse_add_mul_precedence() {
         assert_eq!(parse("3+2*4".to_string()),
-        to_node(BinOp {
+        BinOp {
             name: "+".to_string(),
             left: num_lit(3),
             right: Box::new(
-                to_node(BinOp {
+                BinOp {
                     name: "*".to_string(),
                     left: num_lit(2),
                     right: num_lit(4),
-                    info: default
-                })
+                    info: Info::default()
+                }.to_node()
             ),
-            info: default
-        }));
+            info: Info::default()
+        }.to_node());
     }
 
     #[test]
     fn parse_mul_add_precedence() {
         assert_eq!(parse("3*2+4".to_string()),
-        to_node(BinOp {
+        BinOp {
             name: "+".to_string(),
             left: Box::new(
-                to_node(BinOp {
+                BinOp {
                     name: "*".to_string(),
                     left: num_lit(3),
                     right: num_lit(2),
-                    info: default
-                })
+                    info: Info::default()
+                }.to_node()
             ),
             right: num_lit(4),
-            info: default
-        }));
+            info: Info::default()
+        }.to_node());
     }
 
     #[test]
     fn parse_mul_add_parens() {
         assert_eq!(parse("3*(2+4)".to_string()),
-        to_node(BinOp {
+        BinOp {
             name: "*".to_string(),
             left: num_lit(3),
             right: Box::new(
-                to_node(BinOp {
+                BinOp {
                     name: "+".to_string(),
                     left: num_lit(2),
                     right: num_lit(4),
-                    info: default
-                })
+                    info: Info::default()
+                }.to_node()
             ),
-            info: default
-        }));
+            info: Info::default()
+        }.to_node());
     }
 
     #[test]
     fn parse_add_str() {
         assert_eq!(parse("\"hello\"+\" world\"".to_string()),
-            to_node(BinOp {
+            BinOp {
                 name: "+".to_string(),
                 left: str_lit("hello".to_string()),
                 right: str_lit(" world".to_string()),
-                info: default
-            }));
+                info: Info::default()
+            }.to_node());
     }
 
 }

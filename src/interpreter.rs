@@ -17,9 +17,6 @@ type Frame = HashMap<String, Node>;
 pub struct Interpreter {
 }
 
-impl Interpreter {
-}
-
 impl Default for Interpreter {
     fn default() -> Interpreter {
         Interpreter {}
@@ -38,8 +35,8 @@ impl Visitor<State, Prim, Prim, InterpreterError> for Interpreter {
     fn visit_sym(&mut self, state: &mut State, expr: &Sym) -> Res {
         use Prim::*;
         match expr.name.as_str() {
-            "true" => return Ok(Bool(true, get_info(expr))),
-            "false" => return Ok(Bool(false, get_info(expr))),
+            "true" => return Ok(Bool(true, expr.get_info())),
+            "false" => return Ok(Bool(false, expr.get_info())),
             n => {
                 for frame in state.iter().rev() {
                     match frame.get(n) {
@@ -89,7 +86,7 @@ impl Visitor<State, Prim, Prim, InterpreterError> for Interpreter {
                 frame.insert(expr.name.clone(), *val.clone());
             }
         }
-        return Ok(Unit(get_info(expr)));
+        return Ok(Unit(expr.get_info()));
     }
 
     fn visit_un_op(&mut self, state: &mut State, expr: &UnOp) -> Res {
@@ -97,16 +94,16 @@ impl Visitor<State, Prim, Prim, InterpreterError> for Interpreter {
         let i = self.visit(state, &expr.inner)?;
         match expr.name.as_str() {
             "!" => match i {
-                Bool(n, _) => Ok(Bool(!n, get_info(expr))),
+                Bool(n, _) => Ok(Bool(!n, expr.get_info())),
                 _ => Err(InterpreterError::TypeMismatch("!".to_string(), i))
             },
             "+" => match i {
-                I32(n, _) => Ok(I32(n, get_info(expr))),
+                I32(n, _) => Ok(I32(n, expr.get_info())),
                 _ => Err(InterpreterError::TypeMismatch("+".to_string(), i))
 
             }
             "-" => match i {
-                I32(n, _) => Ok(I32(-n, get_info(expr))),
+                I32(n, _) => Ok(I32(-n, expr.get_info())),
                 _ => Err(InterpreterError::TypeMismatch("-".to_string(), i))
             },
             op => Err(InterpreterError::UnknownPrefixOperator(op.to_string())),
@@ -122,89 +119,89 @@ impl Visitor<State, Prim, Prim, InterpreterError> for Interpreter {
                 (_, r) => Ok(r.clone()),
             },
             "+" => match (&l, &r) {
-                (Bool(l, _), Bool(r, _)) => Ok(I32(if *l {1} else {0} + if *r {1} else {0}, get_info(expr))),
-                (Bool(l, _), I32(r, _)) => Ok(I32(if *l {1} else {0} + r, get_info(expr))),
-                (Bool(l, _), Str(r, _)) => Ok(Str(l.to_string() + &r.to_string(), get_info(expr))),
-                (I32(l, _), Bool(r, _)) => Ok(I32(l + if *r {1} else {0}, get_info(expr))),
-                (I32(l, _), I32(r, _)) => Ok(I32(l + r, get_info(expr))),
-                (I32(l, _), Str(r, _)) => Ok(Str(l.to_string() + &r.to_string(), get_info(expr))),
-                (Str(l, _), Bool(r, _)) => Ok(Str(l.to_string() + &r.to_string(), get_info(expr))),
-                (Str(l, _), I32(r, _)) => Ok(Str(l.to_string() + &r.to_string(), get_info(expr))),
-                (Str(l, _), Str(r, _)) => Ok(Str(l.to_string() + &r.to_string(), get_info(expr))),
+                (Bool(l, _), Bool(r, _)) => Ok(I32(if *l {1} else {0} + if *r {1} else {0}, expr.get_info())),
+                (Bool(l, _), I32(r, _)) => Ok(I32(if *l {1} else {0} + r, expr.get_info())),
+                (Bool(l, _), Str(r, _)) => Ok(Str(l.to_string() + &r.to_string(), expr.get_info())),
+                (I32(l, _), Bool(r, _)) => Ok(I32(l + if *r {1} else {0}, expr.get_info())),
+                (I32(l, _), I32(r, _)) => Ok(I32(l + r, expr.get_info())),
+                (I32(l, _), Str(r, _)) => Ok(Str(l.to_string() + &r.to_string(), expr.get_info())),
+                (Str(l, _), Bool(r, _)) => Ok(Str(l.to_string() + &r.to_string(), expr.get_info())),
+                (Str(l, _), I32(r, _)) => Ok(Str(l.to_string() + &r.to_string(), expr.get_info())),
+                (Str(l, _), Str(r, _)) => Ok(Str(l.to_string() + &r.to_string(), expr.get_info())),
                 _ => Err(InterpreterError::TypeMismatch2("+".to_string(), l, r))
             },
             "==" => match (&l, &r) {
-                (Bool(l, _), Bool(r, _)) => Ok(Bool(*l == *r, get_info(expr))),
-                (I32(l, _), I32(r, _)) => Ok(Bool(l == r, get_info(expr))),
-                (Str(l, _), Str(r, _)) => Ok(Bool(l.to_string() == r.to_string(), get_info(expr))),
+                (Bool(l, _), Bool(r, _)) => Ok(Bool(*l == *r, expr.get_info())),
+                (I32(l, _), I32(r, _)) => Ok(Bool(l == r, expr.get_info())),
+                (Str(l, _), Str(r, _)) => Ok(Bool(l.to_string() == r.to_string(), expr.get_info())),
                 _ => Err(InterpreterError::TypeMismatch2("==".to_string(), l, r))
             },
             "!=" => match (&l, &r) {
-                (Bool(l, _), Bool(r, _)) => Ok(Bool(*l != *r, get_info(expr))),
-                (I32(l, _), I32(r, _)) => Ok(Bool(l != r, get_info(expr))),
-                (Str(l, _), Str(r, _)) => Ok(Bool(l.to_string() != r.to_string(), get_info(expr))),
+                (Bool(l, _), Bool(r, _)) => Ok(Bool(*l != *r, expr.get_info())),
+                (I32(l, _), I32(r, _)) => Ok(Bool(l != r, expr.get_info())),
+                (Str(l, _), Str(r, _)) => Ok(Bool(l.to_string() != r.to_string(), expr.get_info())),
                 _ => Err(InterpreterError::TypeMismatch2("!=".to_string(), l, r))
             },
             ">" => match (&l, &r) {
-                (Bool(l, _), Bool(r, _)) => Ok(Bool(*l > *r, get_info(expr))),
-                (I32(l, _), I32(r, _)) => Ok(Bool(l > r, get_info(expr))),
-                (Str(l, _), Str(r, _)) => Ok(Bool(l.to_string() > r.to_string(), get_info(expr))),
+                (Bool(l, _), Bool(r, _)) => Ok(Bool(*l > *r, expr.get_info())),
+                (I32(l, _), I32(r, _)) => Ok(Bool(l > r, expr.get_info())),
+                (Str(l, _), Str(r, _)) => Ok(Bool(l.to_string() > r.to_string(), expr.get_info())),
                 _ => Err(InterpreterError::TypeMismatch2(">".to_string(), l, r))
             },
             "<" => match (&l, &r) {
-                (Bool(l, _), Bool(r, _)) => Ok(Bool(*l < *r, get_info(expr))),
-                (I32(l, _), I32(r, _)) => Ok(Bool(l < r, get_info(expr))),
-                (Str(l, _), Str(r, _)) => Ok(Bool(l.to_string() < r.to_string(), get_info(expr))),
+                (Bool(l, _), Bool(r, _)) => Ok(Bool(*l < *r, expr.get_info())),
+                (I32(l, _), I32(r, _)) => Ok(Bool(l < r, expr.get_info())),
+                (Str(l, _), Str(r, _)) => Ok(Bool(l.to_string() < r.to_string(), expr.get_info())),
                 _ => Err(InterpreterError::TypeMismatch2("<".to_string(), l, r))
             },
             ">=" => match (&l, &r) {
-                (Bool(l, _), Bool(r, _)) => Ok(Bool(*l >= *r, get_info(expr))),
-                (I32(l, _), I32(r, _)) => Ok(Bool(l >= r, get_info(expr))),
-                (Str(l, _), Str(r, _)) => Ok(Bool(l.to_string() >= r.to_string(), get_info(expr))),
+                (Bool(l, _), Bool(r, _)) => Ok(Bool(*l >= *r, expr.get_info())),
+                (I32(l, _), I32(r, _)) => Ok(Bool(l >= r, expr.get_info())),
+                (Str(l, _), Str(r, _)) => Ok(Bool(l.to_string() >= r.to_string(), expr.get_info())),
                 _ => Err(InterpreterError::TypeMismatch2(">=".to_string(), l, r))
             },
             "<=" => match (&l, &r) {
-                (Bool(l, _), Bool(r, _)) => Ok(Bool(*l <= *r, get_info(expr))),
-                (I32(l, _), I32(r, _)) => Ok(Bool(l <= r, get_info(expr))),
-                (Str(l, _), Str(r, _)) => Ok(Bool(l.to_string() <= r.to_string(), get_info(expr))),
+                (Bool(l, _), Bool(r, _)) => Ok(Bool(*l <= *r, expr.get_info())),
+                (I32(l, _), I32(r, _)) => Ok(Bool(l <= r, expr.get_info())),
+                (Str(l, _), Str(r, _)) => Ok(Bool(l.to_string() <= r.to_string(), expr.get_info())),
                 _ => Err(InterpreterError::TypeMismatch2("<=".to_string(), l, r))
             },
             "-" => match (&l, &r) {
-                (I32(l, _), Bool(r, _)) => Ok(I32(l - if *r {1} else {0}, get_info(expr))),
-                (I32(l, _), I32(r, _)) => Ok(I32(l - r, get_info(expr))),
+                (I32(l, _), Bool(r, _)) => Ok(I32(l - if *r {1} else {0}, expr.get_info())),
+                (I32(l, _), I32(r, _)) => Ok(I32(l - r, expr.get_info())),
                 _ => Err(InterpreterError::TypeMismatch2("-".to_string(), l, r))
             },
             "*" => match (&l, &r) {
-                (Bool(l, _), I32(r, _)) => Ok(I32(if *l {*r} else {0}, get_info(expr))),
-                (Bool(l, _), Str(r, _)) => Ok(Str(if *l {r.to_string()} else {"".to_string()}, get_info(expr))),
-                (I32(l, _), Bool(r, _)) => Ok(I32(if *r {*l} else {0}, get_info(expr))),
-                (I32(l, _), I32(r, _)) => Ok(I32(l * r, get_info(expr))),
-                // (I32(l, _), Str(r, _)) => Ok(Str(l.to_string() * r, get_info(expr))),
-                (Str(l, _), Bool(r, _)) => Ok(Str(if *r {l.to_string()} else {"".to_string()}, get_info(expr))),
-                // (Str(l, _), I32(r, _)) => Ok(Str(l * r.to_string(), get_info(expr))),
+                (Bool(l, _), I32(r, _)) => Ok(I32(if *l {*r} else {0}, expr.get_info())),
+                (Bool(l, _), Str(r, _)) => Ok(Str(if *l {r.to_string()} else {"".to_string()}, expr.get_info())),
+                (I32(l, _), Bool(r, _)) => Ok(I32(if *r {*l} else {0}, expr.get_info())),
+                (I32(l, _), I32(r, _)) => Ok(I32(l * r, expr.get_info())),
+                // (I32(l, _), Str(r, _)) => Ok(Str(l.to_string() * r, expr.get_info())),
+                (Str(l, _), Bool(r, _)) => Ok(Str(if *r {l.to_string()} else {"".to_string()}, expr.get_info())),
+                // (Str(l, _), I32(r, _)) => Ok(Str(l * r.to_string(), expr.get_info())),
                 _ => Err(InterpreterError::TypeMismatch2("*".to_string(), l, r))
             },
             "/" => match (&l, &r) {
-                (I32(l, _), I32(r, _)) => Ok(I32(l / r, get_info(expr))),
+                (I32(l, _), I32(r, _)) => Ok(I32(l / r, expr.get_info())),
                 _ => Err(InterpreterError::TypeMismatch2("/".to_string(), l, r))
             },
             "%" => match (&l, &r) {
-                (I32(l, _), I32(r, _)) => Ok(I32(l % r, get_info(expr))),
+                (I32(l, _), I32(r, _)) => Ok(I32(l % r, expr.get_info())),
                 _ => Err(InterpreterError::TypeMismatch2("%".to_string(), l, r))
             },
             "&&" => match (&l, &r) {
-                (Bool(l, _), Bool(r, _)) => Ok(Bool(*l&&*r, get_info(expr))),
+                (Bool(l, _), Bool(r, _)) => Ok(Bool(*l&&*r, expr.get_info())),
                 _ => Err(InterpreterError::TypeMismatch2("&&".to_string(), l, r))
 
             },
             "||" => match (&l, &r) {
-                (Bool(l, _), Bool(r, _)) => Ok(Bool(*l||*r, get_info(expr))),
+                (Bool(l, _), Bool(r, _)) => Ok(Bool(*l||*r, expr.get_info())),
                 _ => Err(InterpreterError::TypeMismatch2("||".to_string(), l, r))
 
             },
             "^" => match (&l, &r) {
-                (I32(l, _), Bool(r, _)) => Ok(I32(if *r {*l} else {1}, get_info(expr))),
-                (I32(l, _), I32(r, _)) => Ok(I32(i32::pow(*l, *r as u32), get_info(expr))), // TODO: require pos pow
+                (I32(l, _), Bool(r, _)) => Ok(I32(if *r {*l} else {1}, expr.get_info())),
+                (I32(l, _), I32(r, _)) => Ok(I32(i32::pow(*l, *r as u32), expr.get_info())), // TODO: require pos pow
                 _ => Err(InterpreterError::TypeMismatch2("^".to_string(), l, r))
             },
             op => Err(InterpreterError::UnknownInfixOperator(op.to_string())),
@@ -228,8 +225,8 @@ mod tests {
     #[test]
     fn eval_num() {
         let mut interp = Interpreter::default();
-        let tree = PrimNode(I32(12, default));
-        assert_eq!(interp.visit_root(&tree), Ok(I32(12, default)));
+        let tree = PrimNode(I32(12, Info::default()));
+        assert_eq!(interp.visit_root(&tree), Ok(I32(12, Info::default())));
     }
 
     fn eval_str(s: String) -> Res {
@@ -240,61 +237,61 @@ mod tests {
 
     #[test]
     fn parse_and_eval_bool() {
-        assert_eq!(eval_str("true".to_string()), Ok(Bool(true, default)));
+        assert_eq!(eval_str("true".to_string()), Ok(Bool(true, Info::default())));
     }
 
     #[test]
     fn parse_and_eval_bool_and() {
-        assert_eq!(eval_str("true&&true".to_string()), Ok(Bool(true, default)));
-        assert_eq!(eval_str("false&&true".to_string()), Ok(Bool(false, default)));
-        assert_eq!(eval_str("true&&false".to_string()), Ok(Bool(false, default)));
-        assert_eq!(eval_str("false&&false".to_string()), Ok(Bool(false, default)));
+        assert_eq!(eval_str("true&&true".to_string()), Ok(Bool(true, Info::default())));
+        assert_eq!(eval_str("false&&true".to_string()), Ok(Bool(false, Info::default())));
+        assert_eq!(eval_str("true&&false".to_string()), Ok(Bool(false, Info::default())));
+        assert_eq!(eval_str("false&&false".to_string()), Ok(Bool(false, Info::default())));
     }
 
     #[test]
     fn parse_and_eval_bool_or() {
-        assert_eq!(eval_str("true||true".to_string()), Ok(Bool(true, default)));
-        assert_eq!(eval_str("false||true".to_string()), Ok(Bool(true, default)));
-        assert_eq!(eval_str("true||false".to_string()), Ok(Bool(true, default)));
-        assert_eq!(eval_str("false||false".to_string()), Ok(Bool(false, default)));
+        assert_eq!(eval_str("true||true".to_string()), Ok(Bool(true, Info::default())));
+        assert_eq!(eval_str("false||true".to_string()), Ok(Bool(true, Info::default())));
+        assert_eq!(eval_str("true||false".to_string()), Ok(Bool(true, Info::default())));
+        assert_eq!(eval_str("false||false".to_string()), Ok(Bool(false, Info::default())));
     }
 
     #[test]
     fn parse_and_eval_bool_eq() {
-        assert_eq!(eval_str("true==true".to_string()), Ok(Bool(true, default)));
-        assert_eq!(eval_str("false==true".to_string()), Ok(Bool(false, default)));
-        assert_eq!(eval_str("true==false".to_string()), Ok(Bool(false, default)));
-        assert_eq!(eval_str("false==false".to_string()), Ok(Bool(true, default)));
+        assert_eq!(eval_str("true==true".to_string()), Ok(Bool(true, Info::default())));
+        assert_eq!(eval_str("false==true".to_string()), Ok(Bool(false, Info::default())));
+        assert_eq!(eval_str("true==false".to_string()), Ok(Bool(false, Info::default())));
+        assert_eq!(eval_str("false==false".to_string()), Ok(Bool(true, Info::default())));
     }
 
     #[test]
     fn parse_and_eval_i32() {
-        assert_eq!(eval_str("32".to_string()), Ok(I32(32, default)));
+        assert_eq!(eval_str("32".to_string()), Ok(I32(32, Info::default())));
     }
 
     #[test]
     fn parse_and_eval_i32_eq() {
-        assert_eq!(eval_str("0==0".to_string()), Ok(Bool(true, default)));
-        assert_eq!(eval_str("-1==1".to_string()), Ok(Bool(false, default)));
-        assert_eq!(eval_str("1==123".to_string()), Ok(Bool(false, default)));
-        assert_eq!(eval_str("1302==1302".to_string()), Ok(Bool(true, default)));
+        assert_eq!(eval_str("0==0".to_string()), Ok(Bool(true, Info::default())));
+        assert_eq!(eval_str("-1==1".to_string()), Ok(Bool(false, Info::default())));
+        assert_eq!(eval_str("1==123".to_string()), Ok(Bool(false, Info::default())));
+        assert_eq!(eval_str("1302==1302".to_string()), Ok(Bool(true, Info::default())));
     }
 
     #[test]
     fn parse_and_eval_i32_pow() {
-        assert_eq!(eval_str("2^3".to_string()), Ok(I32(8, default)));
-        assert_eq!(eval_str("3^2".to_string()), Ok(I32(9, default)));
-        assert_eq!(eval_str("-4^2".to_string()), Ok(I32(16, default)));
-        assert_eq!(eval_str("2^3^2".to_string()), Ok(I32(512, default)));
+        assert_eq!(eval_str("2^3".to_string()), Ok(I32(8, Info::default())));
+        assert_eq!(eval_str("3^2".to_string()), Ok(I32(9, Info::default())));
+        assert_eq!(eval_str("-4^2".to_string()), Ok(I32(16, Info::default())));
+        assert_eq!(eval_str("2^3^2".to_string()), Ok(I32(512, Info::default())));
     }
 
     #[test]
     fn parse_and_eval_str() {
-        assert_eq!(eval_str("\"32\"".to_string()), Ok(Str("32".to_string(), default)));
+        assert_eq!(eval_str("\"32\"".to_string()), Ok(Str("32".to_string(), Info::default())));
     }
 
     #[test]
     fn parse_and_eval_let() {
-        assert_eq!(eval_str("x=3;x".to_string()), Ok(I32(3, default)));
+        assert_eq!(eval_str("x=3;x".to_string()), Ok(I32(3, Info::default())));
     }
 }

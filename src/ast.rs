@@ -4,6 +4,16 @@
 pub struct Apply {
     pub inner: Box<Node>,
     pub args: Vec<Let>,
+    pub info: Info,
+}
+
+impl ToNode for Apply {
+    fn to_node(self) -> Node {
+        Node::ApplyNode(self)
+    }
+    fn get_info(self) -> Info {
+        self.info
+    }
 }
 
 #[derive(Debug)]
@@ -14,11 +24,11 @@ pub struct Sym {
     pub info: Info,
 }
 
-impl ToNode Sym {
-    to_node(self) {
-        SymNode(self)
+impl ToNode for Sym {
+    fn to_node(self) -> Node {
+        Node::SymNode(self)
     }
-    get_info(self) {
+    fn get_info(self) -> Info {
         self.info
     }
 }
@@ -33,11 +43,12 @@ pub enum Prim {
     Str(String, Info),
 }
 
-impl ToNode Prim {
-    to_node(self) {
-        PrimNode(self)
+impl ToNode for Prim {
+    fn to_node(self) -> Node {
+        Node::PrimNode(self)
     }
-    get_info(self) {
+    fn get_info(self) -> Info {
+        use Prim::*;
         match self {
             Unit(info) => info,
             Bool(_, info) => info,
@@ -56,11 +67,11 @@ pub struct Let {
     pub info: Info,
 }
 
-impl ToNode Let {
-    to_node(self) {
-        LetNode(self)
+impl ToNode for Let {
+    fn to_node(self) -> Node {
+        Node::LetNode(self)
     }
-    get_info(self) {
+    fn get_info(self) -> Info {
         self.info
     }
 }
@@ -74,11 +85,11 @@ pub struct UnOp {
     pub info: Info,
 }
 
-impl ToNode UnOp {
-    to_node(self) {
-        UnOpNode(self)
+impl ToNode for UnOp {
+    fn to_node(self) -> Node {
+        Node::UnOpNode(self)
     }
-    get_info(self) {
+    fn get_info(self) -> Info {
         self.info
     }
 }
@@ -93,11 +104,11 @@ pub struct BinOp {
     pub info: Info,
 }
 
-impl ToNode BinOp {
-    to_node(self) {
-        BinOpNode(self)
+impl ToNode for BinOp {
+    fn to_node(self) -> Node {
+        Node::BinOpNode(self)
     }
-    get_info(self) {
+    fn get_info(self) -> Info {
         self.info
     }
 }
@@ -106,19 +117,19 @@ impl ToNode BinOp {
 #[derive(PartialEq)]
 #[derive(Clone)]
 pub struct Loc {
-    filename: Option<String>;
-    line: i32;
-    col: i32;
+    filename: Option<String>,
+    line: i32,
+    col: i32,
 }
 
 #[derive(Debug)]
 #[derive(PartialEq)]
 #[derive(Clone)]
 pub struct Info {
-    loc: Option<Loc>;
+    pub loc: Option<Loc>,
 }
 
-impl Default Info {
+impl Default for Info {
     fn default() -> Info {
         Info {loc: None}
     }
@@ -135,6 +146,24 @@ pub enum Node {
     LetNode(Let),
     UnOpNode(UnOp),
     BinOpNode(BinOp),
+}
+
+impl ToNode for Node {
+    fn to_node(self) -> Node {
+        self
+    }
+    fn get_info(self) -> Info {
+        use Node::*;
+        match self {
+            Error(_) => Info::default(),
+            SymNode(n) => n.get_info(),
+            PrimNode(n) => n.get_info(),
+            ApplyNode(n) => n.get_info(),
+            LetNode(n) => n.get_info(),
+            UnOpNode(n) => n.get_info(),
+            BinOpNode(n) => n.get_info(),
+        }
+    }
 }
 
 pub trait ToNode {
