@@ -1,3 +1,22 @@
+use super::location::*;
+
+#[derive(Debug)]
+#[derive(PartialEq)]
+#[derive(Clone)]
+pub struct Err {
+    pub msg: String,
+    pub info: Info,
+}
+
+impl ToNode for Err {
+    fn to_node(self) -> Node {
+        Node::Error(self)
+    }
+    fn get_info(self) -> Info {
+        self.info
+    }
+}
+
 #[derive(Debug)]
 #[derive(PartialEq)]
 #[derive(Clone)]
@@ -116,15 +135,6 @@ impl ToNode for BinOp {
 #[derive(Debug)]
 #[derive(PartialEq)]
 #[derive(Clone)]
-pub struct Loc {
-    filename: Option<String>,
-    line: i32,
-    col: i32,
-}
-
-#[derive(Debug)]
-#[derive(PartialEq)]
-#[derive(Clone)]
 pub struct Info {
     pub loc: Option<Loc>,
 }
@@ -139,7 +149,7 @@ impl Default for Info {
 #[derive(PartialEq)]
 #[derive(Clone)]
 pub enum Node {
-    Error(String),
+    Error(Err),
     SymNode(Sym),
     PrimNode(Prim),
     ApplyNode(Apply),
@@ -155,7 +165,7 @@ impl ToNode for Node {
     fn get_info(self) -> Info {
         use Node::*;
         match self {
-            Error(_) => Info::default(),
+            Error(n) => n.get_info(),
             SymNode(n) => n.get_info(),
             PrimNode(n) => n.get_info(),
             ApplyNode(n) => n.get_info(),
@@ -175,18 +185,18 @@ pub fn get_loc<T: ToNode>(n: T) -> Option<Loc> {
     n.get_info().loc
 }
 
-pub trait Visitor<State, Res, Final, Err> {
-    fn visit_root(&mut self, e: &Node) -> Result<Final, Err>;
+pub trait Visitor<State, Res, Final, ErrT> {
+    fn visit_root(&mut self, e: &Node) -> Result<Final, ErrT>;
 
-    fn handle_error(&mut self, state: &mut State, e: &String) -> Result<Res, Err>;
-    fn visit_sym(&mut self, state: &mut State, e: &Sym) -> Result<Res, Err>;
-    fn visit_prim(&mut self, e: &Prim) -> Result<Res, Err>;
-    fn visit_apply(&mut self, state: &mut State, e: &Apply) -> Result<Res, Err>;
-    fn visit_let(&mut self, state: &mut State, e: &Let) -> Result<Res, Err>;
-    fn visit_un_op(&mut self, state: &mut State, e: &UnOp) -> Result<Res, Err>;
-    fn visit_bin_op(&mut self, state: &mut State, e: &BinOp) -> Result<Res, Err>;
+    fn handle_error(&mut self, state: &mut State, e: &Err) -> Result<Res, ErrT>;
+    fn visit_sym(&mut self, state: &mut State, e: &Sym) -> Result<Res, ErrT>;
+    fn visit_prim(&mut self, e: &Prim) -> Result<Res, ErrT>;
+    fn visit_apply(&mut self, state: &mut State, e: &Apply) -> Result<Res, ErrT>;
+    fn visit_let(&mut self, state: &mut State, e: &Let) -> Result<Res, ErrT>;
+    fn visit_un_op(&mut self, state: &mut State, e: &UnOp) -> Result<Res, ErrT>;
+    fn visit_bin_op(&mut self, state: &mut State, e: &BinOp) -> Result<Res, ErrT>;
 
-    fn visit(&mut self, state: &mut State, e: &Node) -> Result<Res, Err> {
+    fn visit(&mut self, state: &mut State, e: &Node) -> Result<Res, ErrT> {
         // println!("{:?}", e);
         use Node::*;
         match e {

@@ -3,6 +3,7 @@ use std::iter::FromIterator;
 
 use super::ast::*;
 use super::tokens::*;
+use super::location::*;
 
 fn binding_power(tok: &Token) -> (i32, bool) {
     let bind = match &tok.tok_type {
@@ -68,12 +69,24 @@ fn get_defs(root: Node) -> Vec<Let> {
     return args;
 }
 
+impl Token {
+    pub fn get_info(self) -> Info {
+        Info {loc: Some(self.pos)}
+    }
+}
+
+impl Loc {
+    pub fn get_info(self) -> Info {
+        Info {loc: Some(self)}
+    }
+}
+
 fn nud(mut toks: VecDeque<Token>) -> (Node, VecDeque<Token>) {
     match toks.pop_front() {
-        None => (Node::Error("Unexpected eof, expected expr".to_string()), toks),
+        None => (Err("Unexpected eof, expected expr".to_string(), Info::default()).to_node(), toks),
         Some(head) => match head.tok_type {
-            TokenType::NumLit => (Prim::I32(head.value.parse().unwrap(), Info::default()).to_node(), toks),
-            TokenType::StringLit => (Prim::Str(head.value, Info::default()).to_node(), toks),
+            TokenType::NumLit => (Prim::I32(head.value.parse().unwrap(), head.get_info()).to_node(), toks),
+            TokenType::StringLit => (Prim::Str(head.value, head.get_info()).to_node(), toks),
             TokenType::Op => {
                 let (lbp, _) = binding_power(&head);
                 let (right, new_toks) = expr(toks, lbp);
@@ -81,7 +94,7 @@ fn nud(mut toks: VecDeque<Token>) -> (Node, VecDeque<Token>) {
                     UnOp {
                         name: head.value,
                         inner: Box::new(right),
-                        info: Info::default(),
+                        info: head.get_info(),
                     }.to_node(),
                     new_toks,
                 );
@@ -94,13 +107,13 @@ fn nud(mut toks: VecDeque<Token>) -> (Node, VecDeque<Token>) {
                 // TODO require close bracket.
                 let close = new_toks.front();
                 match (head.value.as_str(), close) {
-                    (open, Some(Token{value: close, tok_type: TokenType::CloseBracket})) => {
+                    (open, Some(Token{value: close, tok_type: TokenType::CloseBracket, pos})) => {
                         match (open, close.as_str()) {
                             ("(", ")") => {},
                             ("[", "]") => {},
                             ("{", "}") => {},
                             (open, chr) => {
-                                panic!(format!("Unexpected closing bracket for {}, found {}.", open, chr));
+                                panic!(format!("Unexpected closing bracket for {}, found {} at {:?}.", open, chr, pos));
                             },
                         };
                     },
@@ -114,7 +127,7 @@ fn nud(mut toks: VecDeque<Token>) -> (Node, VecDeque<Token>) {
             TokenType::Sym => {
                 // Handle args.
                 return (
-                    Sym{name: head.value, info: Info::default()}.to_node(),
+                    Sym{name: head.value, info: head.get_info()}.to_node(),
                     toks,
                 );
             },
@@ -126,15 +139,15 @@ fn nud(mut toks: VecDeque<Token>) -> (Node, VecDeque<Token>) {
 fn led(mut toks: VecDeque<Token>, left: Node) -> (Node, VecDeque<Token>) {
     // println!("here {:?} {:?}", toks, left);
     match toks.front() {
-        Some(Token{tok_type: TokenType::CloseBracket, value: _}) => {return (Node::Error("Close bracket".to_string()), toks);}
+        Some(Token{tok_type: TokenType::CloseBracket, value: _, pos}) => {return (Err("Close bracket".to_string(), pos.get_info()).to_node(), toks);}
         _ => {}
     }
 
     match toks.pop_front() {
-        None => (Node::Error("Unexpected eof, expected expr tail".to_string()), toks),
+        None => (Err("Unexpected eof, expected expr tail".to_string(), left.get_info()).to_node(), toks),
         Some(head) => match head.tok_type {
-            TokenType::NumLit => (Prim::I32(head.value.parse().unwrap(), Info::default()).to_node(), toks),
-            TokenType::StringLit => (Prim::Str(head.value, Info::default()).to_node(), toks),
+            TokenType::NumLit => (Prim::I32(head.value.parse().unwrap(), head.get_info()).to_node(), toks),
+            TokenType::StringLit => (Prim::Str(head.value, head.get_info()).to_node(), toks),
             TokenType::Op => {
                 let (lbp, assoc_right) = binding_power(&head);
                 let (right, new_toks) = expr(toks, lbp - if assoc_right {1} else {0});
@@ -144,7 +157,7 @@ fn led(mut toks: VecDeque<Token>, left: Node) -> (Node, VecDeque<Token>) {
                             return (Let {
                                 name: s.name,
                                 value: Some(Box::new(right)),
-                                info: Info::default(),
+                                info: head.get_info(),
                             }.to_node(), new_toks);
                         },
                         _ => panic!(format!("Cannot assign to {:?}", left))
@@ -155,7 +168,7 @@ fn led(mut toks: VecDeque<Token>, left: Node) -> (Node, VecDeque<Token>) {
                         name: head.value,
                         left: Box::new(left),
                         right: Box::new(right),
-                        info: Info::default(),
+                        info: head.get_info(),
                     }.to_node(),
                     new_toks,
                 );
@@ -168,7 +181,7 @@ fn led(mut toks: VecDeque<Token>, left: Node) -> (Node, VecDeque<Token>) {
                 // TODO require close bracket.
                 let close = new_toks.front();
                 match (head.value.as_str(), close) {
-                    (open, Some(Token{value: close, tok_type: TokenType::CloseBracket})) => {
+                    (open, Some(Token{value: close, tok_type: TokenType::CloseBracket, pos})) => {
                         match (open, close.as_str()) {
                             ("(", ")") => {},
                             ("[", "]") => {},
@@ -185,7 +198,7 @@ fn led(mut toks: VecDeque<Token>, left: Node) -> (Node, VecDeque<Token>) {
                 new_toks.pop_front();
                 // Introduce arguments
                 let args = get_defs(inner);
-                return (Apply{inner: Box::new(left), args, info: Info::default()}.to_node(), new_toks);
+                return (Apply{inner: Box::new(left), args, info: head.get_info()}.to_node(), new_toks);
             },
             TokenType::Sym => {
                 panic!("Infix symbols not currently supported".to_string());
@@ -225,9 +238,10 @@ fn expr(init_toks: VecDeque<Token>, init_lbp: i32) -> (Node, VecDeque<Token>) {
 pub fn parse(contents: String) -> Node {
     let mut toks: VecDeque<Token> = VecDeque::new();
 
+    let mut pos = Loc::default();
     let mut chars = VecDeque::from_iter(contents.chars());
     loop {
-        let (next, new_chars) = lex_head(chars);
+        let (next, new_chars) = lex_head(chars, &mut pos);
 
         // println!("LEXING {:?}", next);
 
