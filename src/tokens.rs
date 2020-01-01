@@ -175,6 +175,7 @@ mod tests {
     use super::TokenType;
     use std::collections::VecDeque;
     use std::iter::FromIterator;
+    use super::super::location::*;
 
     #[test]
     fn classify_whitespace() {
@@ -204,7 +205,7 @@ mod tests {
     fn lex_number() {
         let chars = VecDeque::from_iter("123".chars());
         let mut pos = Loc::default();
-        let (tok, _) = lex_head(chars, pos);
+        let (tok, _) = lex_head(chars, &mut pos);
         assert_eq!(tok.tok_type, TokenType::NumLit);
     }
 
@@ -212,7 +213,7 @@ mod tests {
     fn lex_symbol() {
         let chars = VecDeque::from_iter("a123".chars());
         let mut pos = Loc::default();
-        let (tok, _) = lex_head(chars, pos);
+        let (tok, _) = lex_head(chars, &mut pos);
         assert_eq!(tok.tok_type, TokenType::Sym);
     }
 
@@ -220,7 +221,7 @@ mod tests {
     fn lex_operator() {
         let chars = VecDeque::from_iter("-a123".chars());
         let mut pos = Loc::default();
-        let (tok, _) = lex_head(chars, pos);
+        let (tok, _) = lex_head(chars, &mut pos);
         assert_eq!(tok.tok_type, TokenType::Op);
     }
 }

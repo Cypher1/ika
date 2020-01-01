@@ -126,6 +126,6 @@ impl Visitor<State, Vec<String>, Tree<String>, CompilerError> for Compiler {
     }
 
     fn handle_error(&mut self, state: &mut State, expr: &Err) -> Res {
-        Err(CompilerError::FailedParse(expr.msg, expr.get_info()))
+        Err(CompilerError::FailedParse(expr.msg.clone(), expr.get_info()))
     }
 }

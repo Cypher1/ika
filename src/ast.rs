@@ -12,8 +12,8 @@ impl ToNode for Err {
     fn to_node(self) -> Node {
         Node::Error(self)
     }
-    fn get_info(self) -> Info {
-        self.info
+    fn get_info(&self) -> Info {
+        self.info.clone()
     }
 }
 
@@ -30,8 +30,8 @@ impl ToNode for Apply {
     fn to_node(self) -> Node {
         Node::ApplyNode(self)
     }
-    fn get_info(self) -> Info {
-        self.info
+    fn get_info(&self) -> Info {
+        self.info.clone()
     }
 }
 
@@ -47,8 +47,8 @@ impl ToNode for Sym {
     fn to_node(self) -> Node {
         Node::SymNode(self)
     }
-    fn get_info(self) -> Info {
-        self.info
+    fn get_info(&self) -> Info {
+        self.info.clone()
     }
 }
 
@@ -66,13 +66,13 @@ impl ToNode for Prim {
     fn to_node(self) -> Node {
         Node::PrimNode(self)
     }
-    fn get_info(self) -> Info {
+    fn get_info(&self) -> Info {
         use Prim::*;
         match self {
-            Unit(info) => info,
-            Bool(_, info) => info,
-            I32(_, info) => info,
-            Str(_, info) => info,
+            Unit(info) => info.clone(),
+            Bool(_, info) => info.clone(),
+            I32(_, info) => info.clone(),
+            Str(_, info) => info.clone(),
         }
     }
 }
@@ -90,8 +90,8 @@ impl ToNode for Let {
     fn to_node(self) -> Node {
         Node::LetNode(self)
     }
-    fn get_info(self) -> Info {
-        self.info
+    fn get_info(&self) -> Info {
+        self.info.clone()
     }
 }
 
@@ -108,8 +108,8 @@ impl ToNode for UnOp {
     fn to_node(self) -> Node {
         Node::UnOpNode(self)
     }
-    fn get_info(self) -> Info {
-        self.info
+    fn get_info(&self) -> Info {
+        self.info.clone()
     }
 }
 
@@ -127,8 +127,8 @@ impl ToNode for BinOp {
     fn to_node(self) -> Node {
         Node::BinOpNode(self)
     }
-    fn get_info(self) -> Info {
-        self.info
+    fn get_info(&self) -> Info {
+        self.info.clone()
     }
 }
 
@@ -162,7 +162,7 @@ impl ToNode for Node {
     fn to_node(self) -> Node {
         self
     }
-    fn get_info(self) -> Info {
+    fn get_info(&self) -> Info {
         use Node::*;
         match self {
             Error(n) => n.get_info(),
@@ -178,10 +178,10 @@ impl ToNode for Node {
 
 pub trait ToNode {
     fn to_node(self: Self) -> Node;
-    fn get_info(self: Self) -> Info;
+    fn get_info(self: &Self) -> Info;
 }
 
-pub fn get_loc<T: ToNode>(n: T) -> Option<Loc> {
+pub fn get_loc<T: ToNode>(n: &T) -> Option<Loc> {
     n.get_info().loc
 }
 

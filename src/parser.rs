@@ -70,8 +70,8 @@ fn get_defs(root: Node) -> Vec<Let> {
 }
 
 impl Token {
-    pub fn get_info(self) -> Info {
-        Info {loc: Some(self.pos)}
+    pub fn get_info(&self) -> Info {
+        Info {loc: Some(self.pos.clone())}
     }
 }
 
@@ -83,16 +83,16 @@ impl Loc {
 
 fn nud(mut toks: VecDeque<Token>) -> (Node, VecDeque<Token>) {
     match toks.pop_front() {
-        None => (Err("Unexpected eof, expected expr".to_string(), Info::default()).to_node(), toks),
+        None => (Err{msg: "Unexpected eof, expected expr".to_string(), info: Info::default()}.to_node(), toks),
         Some(head) => match head.tok_type {
             TokenType::NumLit => (Prim::I32(head.value.parse().unwrap(), head.get_info()).to_node(), toks),
-            TokenType::StringLit => (Prim::Str(head.value, head.get_info()).to_node(), toks),
+            TokenType::StringLit => (Prim::Str(head.value.clone(), head.get_info()).to_node(), toks),
             TokenType::Op => {
                 let (lbp, _) = binding_power(&head);
                 let (right, new_toks) = expr(toks, lbp);
                 return (
                     UnOp {
-                        name: head.value,
+                        name: head.value.clone(),
                         inner: Box::new(right),
                         info: head.get_info(),
                     }.to_node(),
@@ -127,7 +127,7 @@ fn nud(mut toks: VecDeque<Token>) -> (Node, VecDeque<Token>) {
             TokenType::Sym => {
                 // Handle args.
                 return (
-                    Sym{name: head.value, info: head.get_info()}.to_node(),
+                    Sym{name: head.value.clone(), info: head.get_info()}.to_node(),
                     toks,
                 );
             },
@@ -139,15 +139,15 @@ fn nud(mut toks: VecDeque<Token>) -> (Node, VecDeque<Token>) {
 fn led(mut toks: VecDeque<Token>, left: Node) -> (Node, VecDeque<Token>) {
     // println!("here {:?} {:?}", toks, left);
     match toks.front() {
-        Some(Token{tok_type: TokenType::CloseBracket, value: _, pos}) => {return (Err("Close bracket".to_string(), pos.get_info()).to_node(), toks);}
+        Some(Token{tok_type: TokenType::CloseBracket, value: _, pos}) => {return (Err{msg: "Close bracket".to_string(), info: pos.clone().get_info()}.to_node(), toks);}
         _ => {}
     }
 
     match toks.pop_front() {
-        None => (Err("Unexpected eof, expected expr tail".to_string(), left.get_info()).to_node(), toks),
+        None => (Err{msg: "Unexpected eof, expected expr tail".to_string(), info: left.get_info()}.to_node(), toks),
         Some(head) => match head.tok_type {
             TokenType::NumLit => (Prim::I32(head.value.parse().unwrap(), head.get_info()).to_node(), toks),
-            TokenType::StringLit => (Prim::Str(head.value, head.get_info()).to_node(), toks),
+            TokenType::StringLit => (Prim::Str(head.value.clone(), head.get_info()).to_node(), toks),
             TokenType::Op => {
                 let (lbp, assoc_right) = binding_power(&head);
                 let (right, new_toks) = expr(toks, lbp - if assoc_right {1} else {0});
@@ -163,12 +163,13 @@ fn led(mut toks: VecDeque<Token>, left: Node) -> (Node, VecDeque<Token>) {
                         _ => panic!(format!("Cannot assign to {:?}", left))
                     }
                 }
+                let info = head.get_info();
                 return (
                     BinOp {
                         name: head.value,
                         left: Box::new(left),
                         right: Box::new(right),
-                        info: head.get_info(),
+                        info,
                     }.to_node(),
                     new_toks,
                 );
