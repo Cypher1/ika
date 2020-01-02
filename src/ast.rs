@@ -133,10 +133,16 @@ impl ToNode for BinOp {
 }
 
 #[derive(Debug)]
-#[derive(PartialEq)]
 #[derive(Clone)]
 pub struct Info {
     pub loc: Option<Loc>,
+}
+
+
+impl PartialEq for Info {
+    fn eq(&self, other: &Self) -> bool {
+        true
+    }
 }
 
 impl Default for Info {
