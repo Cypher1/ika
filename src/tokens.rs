@@ -68,6 +68,7 @@ pub fn lex_head(mut contents: VecDeque<char>, pos: &mut Loc) -> (Token, VecDeque
 
     let mut tok_type: TokenType = TokenType::Unknown;
     let mut quote: Option<char> = None;
+    let start = pos.clone();
 
     loop {
         match contents.front() {
@@ -134,7 +135,7 @@ pub fn lex_head(mut contents: VecDeque<char>, pos: &mut Loc) -> (Token, VecDeque
     let comment = value == COMMENT;
     let multi_comment = value == MULTI_COMMENT;
     if !comment && !multi_comment {
-        return (Token { value, tok_type, pos: pos.clone()}, contents);
+        return (Token { value, tok_type, pos: start}, contents);
     }
     // Track depth of mutli line comments
     let mut depth = 1;
