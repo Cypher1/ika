@@ -169,7 +169,16 @@ mod tests {
         assert_eq!(size(trit), 3);
     }
     #[test]
-    fn size_pair_bool_ptrs() {
+    fn size_pair_bool_ptrs32() {
+        let unit = Struct(vec![]);
+        let boolt = Union(vec![(Box::new(unit.clone()), 0), (Box::new(unit), 1)]);
+        let bool_ptr = Pointer(32, Box::new(boolt.clone()));
+        let nibble = Struct(vec![(Box::new(bool_ptr.clone()), 0), (Box::new(bool_ptr), 1)]);
+
+        assert_eq!(size(nibble), 2*32);
+    }
+    #[test]
+    fn size_pair_bool_ptrs64() {
         let unit = Struct(vec![]);
         let boolt = Union(vec![(Box::new(unit.clone()), 0), (Box::new(unit), 1)]);
         let bool_ptr = Pointer(64, Box::new(boolt.clone()));
