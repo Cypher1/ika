@@ -61,24 +61,24 @@ mod tests {
     use super::DataType::*;
 
     #[test]
-    fn cardinality_void_is_0() {
+    fn cardinality_void() {
         let void = Union(vec![]);
         assert_eq!(card(void), 0);
     }
     #[test]
-    fn cardinality_unit_is_1() {
+    fn cardinality_unit() {
         let unit = Struct(vec![]);
         assert_eq!(card(unit), 1);
     }
     #[test]
-    fn cardinality_bool_is_2() {
+    fn cardinality_bool() {
         let unit = Struct(vec![]);
         let boolt = Union(vec![(Box::new(unit.clone()), 0), (Box::new(unit), 1)]);
 
         assert_eq!(card(boolt), 2);
     }
     #[test]
-    fn cardinality_trit_is_3() {
+    fn cardinality_trit() {
         let unit = Struct(vec![]);
         let trit = Union(vec![
             (Box::new(unit.clone()), 0),
@@ -89,33 +89,46 @@ mod tests {
         assert_eq!(card(trit), 3);
     }
     #[test]
-    fn cardinality_nibble_is_4() {
+    fn cardinality_nibble() {
         let unit = Struct(vec![]);
         let boolt = Union(vec![(Box::new(unit.clone()), 0), (Box::new(unit), 1)]);
         let nibble = Struct(vec![(Box::new(boolt.clone()), 0), (Box::new(boolt), 1)]);
 
         assert_eq!(card(nibble), 4);
     }
+    #[test]
+    fn cardinality_pent() {
+        let unit = Struct(vec![]);
+        let trit = Union(vec![
+            (Box::new(unit.clone()), 0),
+            (Box::new(unit.clone()), 1),
+            (Box::new(unit.clone()), 2),
+            (Box::new(unit.clone()), 3),
+            (Box::new(unit), 4)
+        ]);
+
+        assert_eq!(card(trit), 5);
+    }
 
     #[test]
-    fn size_void_is_0() {
+    fn size_void() {
         let void = Union(vec![]);
         assert_eq!(size(void), 0);
     }
     #[test]
-    fn size_unit_is_0() {
+    fn size_unit() {
         let unit = Struct(vec![]);
         assert_eq!(size(unit), 0);
     }
     #[test]
-    fn size_bool_is_1() {
+    fn size_bool() {
         let unit = Struct(vec![]);
         let boolt = Union(vec![(Box::new(unit.clone()), 0), (Box::new(unit), 1)]);
 
         assert_eq!(size(boolt), 1);
     }
     #[test]
-    fn size_trit_is_2() {
+    fn size_trit() {
         let unit = Struct(vec![]);
         let trit = Union(vec![
             (Box::new(unit.clone()), 0),
@@ -126,11 +139,24 @@ mod tests {
         assert_eq!(size(trit), 2);
     }
     #[test]
-    fn size_nibble_is_2() {
+    fn size_nibble() {
         let unit = Struct(vec![]);
         let boolt = Union(vec![(Box::new(unit.clone()), 0), (Box::new(unit), 1)]);
         let nibble = Struct(vec![(Box::new(boolt.clone()), 0), (Box::new(boolt), 1)]);
 
         assert_eq!(size(nibble), 2);
+    }
+    #[test]
+    fn size_pent() {
+        let unit = Struct(vec![]);
+        let trit = Union(vec![
+            (Box::new(unit.clone()), 0),
+            (Box::new(unit.clone()), 1),
+            (Box::new(unit.clone()), 2),
+            (Box::new(unit.clone()), 3),
+            (Box::new(unit), 4)
+        ]);
+
+        assert_eq!(size(trit), 3);
     }
 }
