@@ -52,7 +52,8 @@ pub fn size(ty: DataType) -> usize {
         }),
         Struct(s) => s.iter().fold(0, |res, sty| {
             let t = sty.0.clone();
-            res + size(*t)
+            let offset = sty.1.clone();
+            res + offset + size(*t)
         }),
         Pointer(ptr_size, _t) => ptr_size,
         Static => 0,
