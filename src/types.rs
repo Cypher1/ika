@@ -51,7 +51,7 @@ pub fn size(ty: DataType) -> i32 {
             res + size(*t)
         }),
         Pointer(ptr_size, _t) => ptr_size,
-        Func => panic!("Functions shouldnt be treated as cardinality")
+        Func => panic!("Functions shouldnt be treated as size")
     }
 }
 
