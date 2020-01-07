@@ -1,6 +1,18 @@
 use super::ast::*;
 use std::collections::HashMap;
 
+macro_rules! map(
+    { $($key:expr => $value:expr),+ } => {
+        {
+            let mut m = ::std::collections::HashMap::new();
+            $(
+                m.insert($key, $value);
+            )+
+            m
+        }
+     };
+);
+
 #[derive(Debug)]
 #[derive(PartialEq)]
 pub enum InterpreterError {
@@ -23,39 +35,42 @@ impl Default for Interpreter {
     }
 }
 
+fn globals() -> Frame {
+    use Node::*;
+    use Prim::*;
+    map!{
+        "true".to_string() => PrimNode(Bool(true, Info::default())),
+        "false".to_string() => PrimNode(Bool(false, Info::default()))
+    }
+}
+
 type Res = Result<Prim, InterpreterError>;
 type State = Vec<Frame>;
 impl Visitor<State, Prim, Prim, InterpreterError> for Interpreter {
 
     fn visit_root(&mut self, expr: &Node) -> Res {
-        let mut state = vec![Frame::new()];
+        let mut state = vec![globals()];
         self.visit(&mut state, expr)
     }
 
     fn visit_sym(&mut self, state: &mut State, expr: &Sym) -> Res {
-        use Prim::*;
         let info = expr.clone().get_info();
-        match expr.name.as_str() {
-            "true" => return Ok(Bool(true, info)),
-            "false" => return Ok(Bool(false, info)),
-            n => {
-                for frame in state.iter().rev() {
-                    match frame.get(n) {
-                        Some(val) => {
-                            let mut next = state.clone();
-                            next.push(Frame::new());
-                            let result = self.visit(
-                            &mut next,
-                            &val.clone());
-                            return result
-                        }, // This is the variable
-                        None => {},
-                    }
-                    // Not in this frame, go back up.
-                }
-                panic!(format!("{:?} could not be found in scope.", n))
+        let n = expr.name.as_str();
+        for frame in state.iter().rev() {
+            match frame.get(n) {
+                Some(val) => {
+                    let mut next = state.clone();
+                    next.push(Frame::new());
+                    let result = self.visit(
+                    &mut next,
+                    &val.clone());
+                    return result
+                }, // This is the variable
+                None => {},
             }
+            // Not in this frame, go back up.
         }
+        panic!(format!("{:?} could not be found in scope.", n))
     }
 
     fn visit_prim(&mut self, expr: &Prim) -> Res {
