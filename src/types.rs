@@ -50,7 +50,7 @@ pub fn size(ty: DataType) -> i32 {
             let t = sty.0.clone();
             res + size(*t)
         }),
-        Pointer(_) => panic!("Pointer sizes unknown"),
+        Pointer(_) => 64, // TODO: Shouldnt assume 64b
         Func => panic!("Functions shouldnt be treated as cardinality")
     }
 }
@@ -109,6 +109,15 @@ mod tests {
 
         assert_eq!(card(trit), 5);
     }
+    #[test]
+    fn cardinality_pair_bool_ptrs() {
+        let unit = Struct(vec![]);
+        let boolt = Union(vec![(Box::new(unit.clone()), 0), (Box::new(unit), 1)]);
+        let bool_ptr = Pointer(Box::new(boolt.clone()));
+        let nibble = Struct(vec![(Box::new(bool_ptr.clone()), 0), (Box::new(bool_ptr), 1)]);
+
+        assert_eq!(card(nibble), 4);
+    }
 
     #[test]
     fn size_void() {
@@ -158,5 +167,14 @@ mod tests {
         ]);
 
         assert_eq!(size(trit), 3);
+    }
+    #[test]
+    fn size_pair_bool_ptrs() {
+        let unit = Struct(vec![]);
+        let boolt = Union(vec![(Box::new(unit.clone()), 0), (Box::new(unit), 1)]);
+        let bool_ptr = Pointer(Box::new(boolt.clone()));
+        let nibble = Struct(vec![(Box::new(bool_ptr.clone()), 0), (Box::new(bool_ptr), 1)]);
+
+        assert_eq!(size(nibble), 2*64);
     }
 }
