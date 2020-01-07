@@ -7,7 +7,7 @@ pub enum DataType {
     Union(Layout),
     Struct(Layout),
     Func,
-    Pointer(Box<DataType>),
+    Pointer(i32, Box<DataType>),
 }
 
 pub fn card(ty: DataType) -> i32 {
@@ -21,7 +21,7 @@ pub fn card(ty: DataType) -> i32 {
             let t = sty.0.clone();
             res * card(*t)
         }),
-        Pointer(t) => card(*t),
+        Pointer(_ptr_size, t) => card(*t),
         Func => panic!("Functions shouldnt be treated as cardinality")
     }
 }
@@ -50,7 +50,7 @@ pub fn size(ty: DataType) -> i32 {
             let t = sty.0.clone();
             res + size(*t)
         }),
-        Pointer(_) => 64, // TODO: Shouldnt assume 64b
+        Pointer(ptr_size, _t) => ptr_size,
         Func => panic!("Functions shouldnt be treated as cardinality")
     }
 }
@@ -113,7 +113,7 @@ mod tests {
     fn cardinality_pair_bool_ptrs() {
         let unit = Struct(vec![]);
         let boolt = Union(vec![(Box::new(unit.clone()), 0), (Box::new(unit), 1)]);
-        let bool_ptr = Pointer(Box::new(boolt.clone()));
+        let bool_ptr = Pointer(64, Box::new(boolt.clone()));
         let nibble = Struct(vec![(Box::new(bool_ptr.clone()), 0), (Box::new(bool_ptr), 1)]);
 
         assert_eq!(card(nibble), 4);
@@ -172,7 +172,7 @@ mod tests {
     fn size_pair_bool_ptrs() {
         let unit = Struct(vec![]);
         let boolt = Union(vec![(Box::new(unit.clone()), 0), (Box::new(unit), 1)]);
-        let bool_ptr = Pointer(Box::new(boolt.clone()));
+        let bool_ptr = Pointer(64, Box::new(boolt.clone()));
         let nibble = Struct(vec![(Box::new(bool_ptr.clone()), 0), (Box::new(bool_ptr), 1)]);
 
         assert_eq!(size(nibble), 2*64);
