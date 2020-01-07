@@ -94,12 +94,12 @@ mod tests {
         assert_eq!(card(trit), 3);
     }
     #[test]
-    fn cardinality_nibble() {
+    fn cardinality_quad() {
         let unit = Struct(vec![]);
         let boolt = Union(vec![(Box::new(unit.clone()), 0), (Box::new(unit), 0)]);
-        let nibble = Struct(vec![(Box::new(boolt.clone()), 0), (Box::new(boolt), 0)]);
+        let quad = Struct(vec![(Box::new(boolt.clone()), 0), (Box::new(boolt), 0)]);
 
-        assert_eq!(card(nibble), 4);
+        assert_eq!(card(quad), 4);
     }
     #[test]
     fn cardinality_pent() {
@@ -119,9 +119,9 @@ mod tests {
         let unit = Struct(vec![]);
         let boolt = Union(vec![(Box::new(unit.clone()), 0), (Box::new(unit), 0)]);
         let bool_ptr = Pointer(64, Box::new(boolt.clone()));
-        let nibble = Struct(vec![(Box::new(bool_ptr.clone()), 0), (Box::new(bool_ptr), 0)]);
+        let quad = Struct(vec![(Box::new(bool_ptr.clone()), 0), (Box::new(bool_ptr), 0)]);
 
-        assert_eq!(card(nibble), 4);
+        assert_eq!(card(quad), 4);
     }
 
     #[test]
@@ -153,12 +153,12 @@ mod tests {
         assert_eq!(size(trit), 2);
     }
     #[test]
-    fn size_nibble() {
+    fn size_quad() {
         let unit = Struct(vec![]);
         let boolt = Union(vec![(Box::new(unit.clone()), 0), (Box::new(unit), 0)]);
-        let nibble = Struct(vec![(Box::new(boolt.clone()), 0), (Box::new(boolt), 0)]);
+        let quad = Struct(vec![(Box::new(boolt.clone()), 0), (Box::new(boolt), 0)]);
 
-        assert_eq!(size(nibble), 2);
+        assert_eq!(size(quad), 2);
     }
     #[test]
     fn size_pent() {
@@ -178,17 +178,37 @@ mod tests {
         let unit = Struct(vec![]);
         let boolt = Union(vec![(Box::new(unit.clone()), 0), (Box::new(unit), 0)]);
         let bool_ptr = Pointer(32, Box::new(boolt.clone()));
-        let nibble = Struct(vec![(Box::new(bool_ptr.clone()), 0), (Box::new(bool_ptr), 0)]);
+        let quad = Struct(vec![(Box::new(bool_ptr.clone()), 0), (Box::new(bool_ptr), 0)]);
 
-        assert_eq!(size(nibble), 2*32);
+        assert_eq!(size(quad), 2*32);
     }
     #[test]
     fn size_pair_bool_ptrs64() {
         let unit = Struct(vec![]);
         let boolt = Union(vec![(Box::new(unit.clone()), 0), (Box::new(unit), 0)]);
         let bool_ptr = Pointer(64, Box::new(boolt.clone()));
-        let nibble = Struct(vec![(Box::new(bool_ptr.clone()), 0), (Box::new(bool_ptr), 0)]);
+        let quad = Struct(vec![(Box::new(bool_ptr.clone()), 0), (Box::new(bool_ptr), 0)]);
 
-        assert_eq!(size(nibble), 2*64);
+        assert_eq!(size(quad), 2*64);
+    }
+
+    #[test]
+    fn size_padded_nibble() {
+        let unit = Struct(vec![]);
+        let boolt = Union(vec![(Box::new(unit.clone()), 0), (Box::new(unit), 0)]);
+        let quad = Struct(vec![(Box::new(boolt.clone()), 0), (Box::new(boolt), 0)]);
+        let nibble = Struct(vec![(Box::new(quad.clone()), 2), (Box::new(quad), 2)]);
+
+        assert_eq!(size(nibble), 8);
+    }
+
+    #[test]
+    fn size_bool_and_fn() {
+        let unit = Struct(vec![]);
+        let boolt = Union(vec![(Box::new(unit.clone()), 0), (Box::new(unit), 0)]);
+        let fn_ptr = Pointer(64, Box::new(Static));
+        let closure = Struct(vec![(Box::new(boolt), 7), (Box::new(fn_ptr), 0)]);
+
+        assert_eq!(size(closure), 72);
     }
 }
