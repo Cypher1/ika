@@ -224,6 +224,11 @@ impl Visitor<State, Prim, Prim, InterpreterError> for Interpreter {
                 (Err(_), r) => r,
                 (l, _r) => l,
             },
+            "-|" => match (l, r) {
+                //TODO: Add pattern matching.
+                (Ok(_), r) => r,
+                (l, _r) => l,
+            },
             op => Err(InterpreterError::UnknownInfixOperator(op.to_string(), info)),
         }
     }
