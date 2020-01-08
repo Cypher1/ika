@@ -79,13 +79,10 @@ impl Visitor<State, Prim, Prim, InterpreterError> for Interpreter {
     }
 
     fn visit_apply(&mut self, state: &mut State, expr: &Apply) -> Res {
-        println!("apply: {:?} to {:?}", expr.args, expr.inner);
         // Add a new scope
         state.push(Frame::new());
         for arg in expr.args.iter() {
-            let n = Node::LetNode(arg.clone());
-            println!("def: {:?}", n);
-            self.visit(state, &n)?;
+            self.visit_let(state, arg)?;
         }
         // Visit the expr.inner
         let res = self.visit(state, &*expr.inner);
@@ -94,7 +91,6 @@ impl Visitor<State, Prim, Prim, InterpreterError> for Interpreter {
     }
 
     fn visit_let(&mut self, state: &mut State, expr: &Let) -> Res {
-        println!("let: {:?}", expr);
         use Prim::*;
         match (state.last_mut(), expr.value.as_ref()) {
             (None, _) => panic!("there is no stack frame"),
