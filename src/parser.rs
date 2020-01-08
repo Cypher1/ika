@@ -11,7 +11,7 @@ fn binding_power(tok: &Token) -> (i32, bool) {
             ";" => 20,
             "," => 30,
             "=" => 40,
-            ":" => 40,
+            ":" => 42,
             "?" => 45,
             "-|" => 47,
             "<" => 50,
@@ -36,7 +36,7 @@ fn binding_power(tok: &Token) -> (i32, bool) {
             "]" => 110,
             "{" => 110,
             "}" => 110,
-            _ => panic!("Unknown operator"),
+            op => panic!(format!("Unknown operator {}", op)),
         },
         TokenType::NumLit => 1000,
         _ => 1000, // TODO impossible

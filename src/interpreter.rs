@@ -229,7 +229,26 @@ impl Visitor<State, Prim, Prim, InterpreterError> for Interpreter {
                 (Ok(_), r) => r,
                 (l, _r) => l,
             },
-            op => Err(InterpreterError::UnknownInfixOperator(op.to_string(), info)),
+            ":" => match (&l?, &r?) {
+                (Unit(i), Str(ty, _)) => match ty.as_ref() {
+                    "()" => Ok(Unit((*i).clone())),
+                    t => Err(InterpreterError::TypeMismatch(t.to_string(), Unit((*i).clone()), (*i).clone())),
+            },
+                (Bool(b, i), Str(ty, _)) => match ty.as_ref() {
+                    "bool" => Ok(Bool(*b, (*i).clone())),
+                    t => Err(InterpreterError::TypeMismatch(t.to_string(), Bool(*b, (*i).clone()), (*i).clone())),
+            },
+                (I32(b, i), Str(ty, _)) => match ty.as_ref() {
+                    "i32" => Ok(I32(*b, (*i).clone())),
+                    t => Err(InterpreterError::TypeMismatch(t.to_string(), I32(*b, (*i).clone()), (*i).clone())),
+            },
+                (Str(b, i), Str(ty, _)) => match ty.as_ref() {
+                    "string" => Ok(Str((*b).clone(), (*i).clone())),
+                    t => Err(InterpreterError::TypeMismatch(t.to_string(), Str((*b).clone(), (*i).clone()), (*i).clone())),
+            },
+                (_, t) => Err(InterpreterError::TypeMismatch("type".to_string(), t.clone(), t.get_info())),
+        }
+        op => Err(InterpreterError::UnknownInfixOperator(op.to_string(), info)),
         }
     }
 
