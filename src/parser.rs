@@ -183,7 +183,7 @@ fn led(mut toks: VecDeque<Token>, left: Node) -> (Node, VecDeque<Token>) {
                 // TODO: Handle empty parens
                 let close = new_toks.front();
                 match (head.value.as_str(), close) {
-                    (open, Some(Token{value: close, tok_type: TokenType::CloseBracket, pos})) => {
+                    (open, Some(Token{value: close, tok_type: TokenType::CloseBracket, pos: _})) => {
                         match (open, close.as_str()) {
                             ("(", ")") => {},
                             ("[", "]") => {},
