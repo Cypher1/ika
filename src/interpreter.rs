@@ -18,6 +18,7 @@ macro_rules! map(
 pub enum InterpreterError {
     UnknownInfixOperator(String, Info),
     UnknownPrefixOperator(String, Info),
+    UnknownSymbol(String, Info),
     FailedParse(String, Info),
     TypeMismatch(String, Prim, Info),
     TypeMismatch2(String, Prim, Prim, Info),
@@ -71,7 +72,7 @@ impl Visitor<State, Prim, Prim, InterpreterError> for Interpreter {
             }
             // Not in this frame, go back up.
         }
-        panic!(format!("{:?} could not be found in scope.", n))
+        Err(InterpreterError::UnknownSymbol(n.to_string(), info))
     }
 
     fn visit_prim(&mut self, expr: &Prim) -> Res {
