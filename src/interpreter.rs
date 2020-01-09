@@ -22,6 +22,7 @@ pub enum InterpreterError {
     FailedParse(String, Info),
     TypeMismatch(String, Prim, Info),
     TypeMismatch2(String, Prim, Prim, Info),
+    RequirementFailure(Info),
 }
 
 type Frame = HashMap<String, Node>;
@@ -226,6 +227,7 @@ impl Visitor<State, Prim, Prim, InterpreterError> for Interpreter {
             },
             "-|" => match (l, r) {
                 //TODO: Add pattern matching.
+                (Ok(Bool(false, info)), _r) => Err(InterpreterError::RequirementFailure(info)),
                 (Ok(_), r) => r,
                 (l, _r) => l,
             },
