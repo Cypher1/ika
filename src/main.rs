@@ -40,11 +40,11 @@ fn main() -> std::io::Result<()> {
 
 fn work(filename: String, interactive: bool, show_ast: bool) -> std::io::Result<()> {
     let mut contents = String::new();
-    let mut file = File::open(filename)?;
+    let mut file = File::open(filename.clone())?;
     file.read_to_string(&mut contents)?;
     // println!("Content: '\n{}'", contents);
 
-    let ast = parser::parse(contents);
+    let ast = parser::parse(filename, contents);
 
     if show_ast {
         println!("R: {:#?}", ast);

@@ -140,9 +140,17 @@ pub struct Info {
     pub ty: Option<TypeInfo>,
 }
 
-impl fmt::Debug for Info {
+impl std::fmt::Debug for Info {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "")
+        match &self.loc {
+            Some(loc) => write!(f, "{:?}", loc),
+            None => write!(f, ""),
+        }?;
+        match &self.ty {
+            Some(ty) => write!(f, "{:?}", ty),
+            None => write!(f, ""),
+        }?;
+        Ok(())
     }
 }
 
