@@ -44,7 +44,7 @@ fn work(filename: String, interactive: bool, show_ast: bool) -> std::io::Result<
     file.read_to_string(&mut contents)?;
     // println!("Content: '\n{}'", contents);
 
-    let ast = parser::parse(filename, contents);
+    let ast = parser::parse_file(filename, contents);
 
     if show_ast {
         println!("R: {:#?}", ast);

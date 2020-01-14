@@ -239,10 +239,18 @@ fn expr(init_toks: VecDeque<Token>, init_lbp: i32) -> (Node, VecDeque<Token>) {
     return (left, toks);
 }
 
-pub fn parse(filename: String, contents: String) -> Node {
+pub fn parse(contents: String) -> Node {
+    parse_impl(None, contents)
+}
+
+pub fn parse_file(filename: String, contents: String) -> Node {
+    parse_impl(Some(filename), contents)
+}
+
+fn parse_impl(filename: Option<String>, contents: String) -> Node {
     let mut toks: VecDeque<Token> = VecDeque::new();
 
-    let mut pos = Loc{filename: Some(filename), ..Loc::default()};
+    let mut pos = Loc{filename, ..Loc::default()};
     let mut chars = VecDeque::from_iter(contents.chars());
     loop {
         let (next, new_chars) = lex_head(chars, &mut pos);
