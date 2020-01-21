@@ -1,3 +1,8 @@
+# Announcement: Ika has been merged into my other language project [Tako](https://github.com/Cypher1/tako).
+I haven't given up on learning about programming languages, I just like implementing in Rust better than C++ at the moment.
+
+[Please take a look](https://github.com/Cypher1/tako)
+
 # Ika
 
 [![Build Status](https://github.com/Cypher1/ika/workflows/Rust/badge.svg)](https://github.com/Cypher1/ika/actions)
